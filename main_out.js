@@ -937,15 +937,70 @@
                 ZW: "EU-London"
             };
             f.connect = Ja;
+
+var data = {"action":"test"};
+
+
+var response = null;
+
+
+l.ajax({
+ 	type: "POST",
+      dataType: "json",
+      url: "checkdir.php", //Relative or absolute path to response.php file
+      data: data,
+      success: function(data) {
+	//alert(data["names"]);
+	response = JSON.parse(data["names"]);	
+}
+
+});
+
+
+
+var interval1Id = setInterval(function(){
+    //console.log("logging every 5 seconds");
+    //console.log(Aa);
+    
+
+
+l.ajax({
+ 	type: "POST",
+      dataType: "json",
+      url: "checkdir.php", //Relative or absolute path to response.php file
+      data: data,
+      success: function(data) {
+	//alert(data["names"]);
+	response = JSON.parse(data["names"]);	
+}
+
+});
+	//console.log(response);
+	for (var i = 0; i < response.length; i++) {
+    	//console.log(response[i]);
+	if (-1 == Aa.indexOf(response[i])) {
+	Aa.push(response[i]);
+	console.log("Add:"+response[i]);	
+	}
+}
+
+},20000);
+
+
+
+
+
             var ba = 500,
                 Ma = -1,
                 Na = -1,
                 x = null,
                 z = 1,
                 ja = null,
-                K = {}, Aa = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;ea;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
-                hb = ["8", "nasa"],
-                ib = ["m'blob"];
+                K = {},
+		 Aa = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;ea;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
+		hb = ["8", "nasa"],
+                //Aa = hb,
+		ib = ["m'blob"];
             va.prototype = {
                 id: 0,
                 a: null,
@@ -1312,4 +1367,5 @@
             f.onload = Ta
         }
     }
+console.log(Aa);
 })(window, window.jQuery);
