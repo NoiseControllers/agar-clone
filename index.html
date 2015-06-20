@@ -37,7 +37,7 @@
 </div>
 <div class="form-group">
 <input id="nick" class="form-control" placeholder="Nick" maxlength="15"/>
-<select id="gamemode" class="form-control" onchange="setGameMode(setScale(this).val());" required>
+<select id="gamemode" class="form-control" onchange="setGameMode($(this).val());" required>
 <option selected value="">FFA</option>
 <option value=":teams">Teams</option>
 <option value=":experimental">Experimental</option>
@@ -45,7 +45,7 @@
 <br clear="both"/>
 </div>
 <div id="locationUnknown">
-<select id="region" class="form-control" onchange="setRegion(setScale('#region').val());" required>
+<select id="region" class="form-control" onchange="setRegion($('#region').val());" required>
 <option selected disabled value=""> -- Select a Region -- </option>
 <option value="US-Fremont">US West</option>
 <option value="US-Atlanta">US East</option>
@@ -71,7 +71,7 @@
 <p></p>
 </div>
 <button disabled type="submit" id="playBtn" onclick="setNick(document.getElementById('nick').value); return false;" class="btn btn-play btn-primary btn-needs-server">Play</button>
-<button onclick="setScale('#settings, #instructions').toggle();return false;" class="btn btn-info btn-settings"><i class="glyphicon glyphicon-cog"></i></button>
+<button onclick="$('#settings, #instructions').toggle();return false;" class="btn btn-info btn-settings"><i class="glyphicon glyphicon-cog"></i></button>
 <br clear="both"/>
 </div>
 <div id="settings" class="checkbox" style="display:none;">
@@ -81,11 +81,11 @@
 <br clear="both"/>
 </div>
 <div style="margin: 6px;">
-<label><input type="checkbox" onchange="setSkins(!setScale(this).is(':checked'));"> No skins</label>
-<label><input type="checkbox" onchange="setNames(!setScale(this).is(':checked'));"> No names</label>
-<label><input type="checkbox" onchange="setDarkTheme(setScale(this).is(':checked'));"> Dark Theme</label>
-<label><input type="checkbox" onchange="setColors(setScale(this).is(':checked'));"> No colors</label>
-<label><input type="checkbox" onchange="setShowMass(setScale(this).is(':checked'));"> Show mass</label>
+<label><input type="checkbox" onchange="setSkins(!$(this).is(':checked'));"> No skins</label>
+<label><input type="checkbox" onchange="setNames(!$(this).is(':checked'));"> No names</label>
+<label><input type="checkbox" onchange="setDarkTheme($(this).is(':checked'));"> Dark Theme</label>
+<label><input type="checkbox" onchange="setColors($(this).is(':checked'));"> No colors</label>
+<label><input type="checkbox" onchange="setShowMass($(this).is(':checked'));"> Show mass</label>
 </div>
 </div>
 </form>

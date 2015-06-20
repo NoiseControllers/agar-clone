@@ -19,9 +19,9 @@
         ctx = Canvas.getContext("2d");
         Canvas.onmousedown = function(event) {
             if (isTouchStart) {
-                var xOffset = event.clientX - (5 + r / 5 / 2),
-                    yOffset = event.clientY - (5 + r / 5 / 2);
-                if (Math.sqrt(xOffset * xOffset + yOffset * yOffset) <= r / 5 / 2) {
+                var xOffset = event.clientX - (5 + canvasWidth / 5 / 2),
+                    yOffset = event.clientY - (5 + canvasWidth / 5 / 2);
+                if (Math.sqrt(xOffset * xOffset + yOffset * yOffset) <= canvasWidth / 5 / 2) {
                     sendMouseMove();
                     sendUint8(17);
                     return
@@ -73,17 +73,17 @@
     function handleWheel(event) {
         zoom *= Math.pow(.9, event.wheelDelta / -120 || event.detail || 0);
         1 > zoom && (zoom = 1);
-        zoom > 4 / k && (zoom = 4 / k)
+        zoom > 4 / viewZoom && (zoom = 4 / viewZoom)
     }
 
-    function Ua() {
-        if (.4 > k) M = null;
+    function buildQTree() {
+        if (.4 > viewZoom) qTree = null;
         else {
-            for (var a = Number.POSITIVE_INFINITY, b = Number.POSITIVE_INFINITY, c = Number.NEGATIVE_INFINITY, d = Number.NEGATIVE_INFINITY, e = 0, i = 0; i < v.length; i++) {
-                var h = v[i];
-                !h.shouldRender() || h.prepareData || 20 >= h.size * k || (e = Math.max(h.size, e), a = Math.min(h.x, a), b = Math.min(h.y, b), c = Math.max(h.x, c), d = Math.max(h.y, d))
+            for (var a = Number.POSITIVE_INFINITY, b = Number.POSITIVE_INFINITY, c = Number.NEGATIVE_INFINITY, d = Number.NEGATIVE_INFINITY, e = 0, i = 0; i < nodelist.length; i++) {
+                var node = nodelist[i];
+                !node.shouldRender() || node.prepareData || 20 >= node.size * viewZoom || (e = Math.max(node.size, e), a = Math.min(node.x, a), b = Math.min(node.y, b), c = Math.max(node.x, c), d = Math.max(node.y, d))
             }
-            M = Quad.init({
+            qTree = Quad.init({
                 minX: a - (e + 100),
                 minY: b - (e + 100),
                 maxX: c + (e + 100),
@@ -91,15 +91,15 @@
                 maxChildren: 2,
                 maxDepth: 4
             });
-            for (i = 0; i < v.length; i++)
-                if (h = v[i], h.shouldRender() && !(20 >= h.size * k))
-                    for (a = 0; a < h.points.length; ++a) b = h.points[a].x, c = h.points[a].y, b < t - r / 2 / k || c < u - s / 2 / k || b > t + r / 2 / k || c > u + s / 2 / k || M.insert(h.points[a])
+            for (i = 0; i < nodelist.length; i++)
+                if (node = nodelist[i], node.shouldRender() && !(20 >= node.size * viewZoom))
+                    for (a = 0; a < node.points.length; ++a) b = node.points[a].x, c = node.points[a].y, b < t - canvasWidth / 2 / viewZoom || c < u - canvasHeight / 2 / viewZoom || b > t + canvasWidth / 2 / viewZoom || c > u + canvasHeight / 2 / viewZoom || qTree.insert(node.points[a])
         }
     }
 
     function mouseCoordinateChange() {
-        X = (rawMouseX - r / 2) / k + t;
-        Y = (rawMouseY - s / 2) / k + u
+        X = (rawMouseX - canvasWidth / 2) / viewZoom + t;
+        Y = (rawMouseY - canvasHeight / 2) / viewZoom + u
     }
 
     function getServerList() {
@@ -177,7 +177,7 @@
         G = [];
         n = [];
         A = {};
-        v = [];
+        nodelist = [];
         Cells = [];
         leaderBoard = [];
         Canvas = y = null;
@@ -289,7 +289,7 @@
                 drawLeaderBoard();
                 break;
             case 64:
-                ea = msg.getFloat64(c, true), c += 8, fa = msg.getFloat64(c, true), c += 8, ga = msg.getFloat64(c, true), c += 8, ha = msg.getFloat64(c, true), c += 8, Q = (ga + ea) / 2, R = (ha + fa) / 2, S = 1, 0 == n.length && (t = Q, u = R, k = S)
+                ea = msg.getFloat64(c, true), c += 8, fa = msg.getFloat64(c, true), c += 8, ga = msg.getFloat64(c, true), c += 8, ha = msg.getFloat64(c, true), c += 8, Q = (ga + ea) / 2, R = (ha + fa) / 2, S = 1, 0 == n.length && (t = Q, u = R, viewZoom = S)
         }
     }
 
@@ -333,7 +333,7 @@
             }
             q = p;
             p = null;
-            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new Cell(d, m, h, g, f, q), v.push(p), A[d] = p, p.ka = m, p.la = h);
+            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new Cell(d, m, h, g, f, q), nodelist.push(p), A[d] = p, p.ka = m, p.la = h);
             p.isVirus = l;
             p.isAgitated = r;
             p.nx = m;
@@ -353,8 +353,8 @@
     function sendMouseMove() {
         var msg;
         if (wsIsOpen()) {
-            msg = rawMouseX - r / 2;
-            var b = rawMouseY - s / 2;
+            msg = rawMouseX - canvasWidth / 2;
+            var b = rawMouseY - canvasHeight / 2;
             64 > msg * msg + b * b || .01 > Math.abs(Ma - X) && .01 > Math.abs(Na - Y) || (Ma = X, Na = Y, msg = prepareData(21), msg.setUint8(0, 16), msg.setFloat64(1, X, true), msg.setFloat64(9, Y, true), msg.setUint32(17, 0, true), wsSend(msg))
         }
     }
@@ -386,16 +386,16 @@
     }
 
     function canvasResize() {
-        r = wHandle.innerWidth;
-        s = wHandle.innerHeight;
-        nCanvas.width = Canvas.width = r;
-        nCanvas.height = Canvas.height = s;
+        canvasWidth = wHandle.innerWidth;
+        canvasHeight = wHandle.innerHeight;
+        nCanvas.width = Canvas.width = canvasWidth;
+        nCanvas.height = Canvas.height = canvasHeight;
         drawGameScene()
     }
 
     function viewRange() {
         var a;
-        a = 1 * Math.max(s / 1080, r / 1920);
+        a = 1 * Math.max(canvasHeight / 1080, canvasWidth / 1920);
         return a *= zoom
     }
 
@@ -403,7 +403,7 @@
         if (0 != n.length) {
             for (var a = 0, b = 0; b < n.length; b++) a += n[b].size;
             a = Math.pow(Math.min(64 / a, 1), .4) * viewRange();
-            k = (9 * k + a) / 10
+            viewZoom = (9 * viewZoom + a) / 10
         }
     }
 
@@ -417,24 +417,24 @@
                 a = 0, d = 0; d < n.length; d++) n[d].updatePos(), a += n[d].x / n.length, c += n[d].y / n.length;
             Q = a;
             R = c;
-            S = k;
+            S = viewZoom;
             t = (t + a) / 2;
             u = (u + c) / 2
-        } else t = (29 * t + Q) / 30, u = (29 * u + R) / 30, k = (9 * k + S * viewRange()) / 10;
-        Ua();
+        } else t = (29 * t + Q) / 30, u = (29 * u + R) / 30, viewZoom = (9 * viewZoom + S * viewRange()) / 10;
+        buildQTree();
         mouseCoordinateChange();
-        xa || ctx.clearRect(0, 0, r, s);
-        xa ? (ctx.fillStyle = showDarkTheme ? "#111111" : "#F2FBFF", ctx.globalAlpha = .05, ctx.fillRect(0, 0, r, s), ctx.globalAlpha = 1) : drawGrid();
-        v.sort(function(a, b) {
+        xa || ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        xa ? (ctx.fillStyle = showDarkTheme ? "#111111" : "#F2FBFF", ctx.globalAlpha = .05, ctx.fillRect(0, 0, canvasWidth, canvasHeight), ctx.globalAlpha = 1) : drawGrid();
+        nodelist.sort(function(a, b) {
             return a.size == b.size ? a.id - b.id : a.size - b.size
         });
         ctx.save();
-        ctx.translate(r / 2, s / 2);
-        ctx.scale(k, k);
+        ctx.translate(canvasWidth / 2, canvasHeight / 2);
+        ctx.scale(viewZoom, viewZoom);
         ctx.translate(-t, -u);
         for (d = 0; d < Cells.length; d++) Cells[d].drawOneCell(ctx);
 
-        for (d = 0; d < v.length; d++) v[d].drawOneCell(ctx);
+        for (d = 0; d < nodelist.length; d++) nodelist[d].drawOneCell(ctx);
         //console.log(Cells.length);
         if (ta) {
             ca = (3 * ca + ra) /
@@ -452,9 +452,9 @@
             ctx.restore()
         }
         ctx.restore();
-        Canvas && Canvas.width && ctx.drawImage(Canvas, r - Canvas.width - 10, 10);
+        Canvas && Canvas.width && ctx.drawImage(Canvas, canvasWidth - Canvas.width - 10, 10);
         J = Math.max(J, eb());
-        0 != J && (null == ja && (ja = new ka(24, "#FFFFFF")), ja.setValue("Score: " + ~~(J / 100)), c = ja.render(), a = c.width, ctx.globalAlpha = .2, ctx.fillStyle = "#000000", ctx.fillRect(10, s - 10 - 24 - 10, a + 10, 34), ctx.globalAlpha = 1, ctx.drawImage(c, 15, s - 10 - 24 - 5));
+        0 != J && (null == ja && (ja = new ka(24, "#FFFFFF")), ja.setValue("Score: " + ~~(J / 100)), c = ja.render(), a = c.width, ctx.globalAlpha = .2, ctx.fillStyle = "#000000", ctx.fillRect(10, canvasHeight - 10 - 24 - 10, a + 10, 34), ctx.globalAlpha = 1, ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5));
         drawSplitIcon();
         b = Date.now() - b;
         b > 1E3 / 60 ? z -= .01 : b < 1E3 / 65 && (z += .01);.4 > z && (z = .4);
@@ -463,19 +463,19 @@
 
     function drawGrid() {
         ctx.fillStyle = showDarkTheme ? "#111111" : "#F2FBFF";
-        ctx.fillRect(0, 0, r, s);
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         ctx.save();
         ctx.strokeStyle = showDarkTheme ? "#AAAAAA" : "#000000";
         ctx.globalAlpha = .2;
-        ctx.scale(k, k);
-        for (var a = r / k, b = s / k, c = -.5 + (-t + a / 2) % 50; c < a; c += 50) ctx.beginPath(), ctx.moveTo(c, 0), ctx.lineTo(c, b), ctx.stroke();
+        ctx.scale(viewZoom, viewZoom);
+        for (var a = canvasWidth / viewZoom, b = canvasHeight / viewZoom, c = -.5 + (-t + a / 2) % 50; c < a; c += 50) ctx.beginPath(), ctx.moveTo(c, 0), ctx.lineTo(c, b), ctx.stroke();
         for (c = -.5 + (-u + b / 2) % 50; c < b; c += 50) ctx.beginPath(), ctx.moveTo(0, c), ctx.lineTo(a, c), ctx.stroke();
         ctx.restore()
     }
 
     function drawSplitIcon() {
         if (isTouchStart && splitIcon.width) {
-            var a = r / 5;
+            var a = canvasWidth / 5;
             ctx.drawImage(splitIcon, 5, 5, a, a)
         }
     }
@@ -493,7 +493,7 @@
                 var ctx = Canvas.getContext("2d"),
                     b = 60,
                     b = null == y ? b + 24 * leaderBoard.length : b + 180,
-                    c = Math.min(200, .3 * r) / 200;
+                    c = Math.min(200, .3 * canvasWidth) / 200;
                 Canvas.width = 200 * c;
                 Canvas.height = b * c;
                 ctx.scale(c, c);
@@ -546,13 +546,13 @@
         localProtocolHttps = "https:" == localProtocol;
     if (wHandle.location.ancestorOrigins && wHandle.location.ancestorOrigins.length && "https://apps.facebook.com" != wHandle.location.ancestorOrigins[0]) wHandle.top.location = "http://agar.io/";
     else {
-        var nCanvas, ctx, Canvas, r, s, M = null,
+        var nCanvas, ctx, Canvas, canvasWidth, canvasHeight, qTree = null,
             ws = null,
             t = 0,
             u = 0,
             G = [],
             n = [],
-            A = {}, v = [],
+            A = {}, nodelist = [],
             Cells = [],
             leaderBoard = [],
             rawMouseX = 0,
@@ -566,7 +566,7 @@
             fa = 0,
             ga = 1E4,
             ha = 1E4,
-            k = 1,
+            viewZoom = 1,
             w = null,
             showSkin = true,
             showName = true,
@@ -677,7 +677,7 @@
                     //console.log(response[insert]);
                 if (-1 == knownNameDict.indexOf(response[i])) {
                 knownNameDict.push(response[i]);
-                console.log("Add:"+response[i]);
+                //console.log("Add:"+response[i]);
                 }
             }
             },15000);
@@ -720,9 +720,9 @@
                 wasSimpleDrawing: true,
                 destory: function() {
                     var a;
-                    for (a = 0; a < v.length; a++)
-                        if (v[a] == this) {
-                            v.splice(a, 1);
+                    for (a = 0; a < nodelist.length; a++)
+                        if (nodelist[a] == this) {
+                            nodelist.splice(a, 1);
                             break
                         }
                     delete A[this.id];
@@ -767,7 +767,7 @@
                     20 > this.size && (a = 0);
                     this.isVirus && (a = 30);
                     var b = this.size;
-                    this.isVirus || (b *= k);
+                    this.isVirus || (b *= viewZoom);
                     b *= z;
                     this.nnn & 32 && (b *= .25);
                     return~~ Math.max(b, a)
@@ -786,11 +786,11 @@
                         var f = a[d].e,
                             e = a[(d - 1 + c) % c].e,
                             m = a[(d + 1) % c].e;
-                        if (15 < this.size && null != M && 20 < this.size * k && 0 != this.id) {
+                        if (15 < this.size && null != qTree && 20 < this.size * viewZoom && 0 != this.id) {
                             var l = false,
                                 n = a[d].x,
                                 q = a[d].y;
-                            M.retrieve2(n -
+                            qTree.retrieve2(n -
                                 5, q - 5, 10, 10, function(a) {
                                     a.S != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y) && (l = true)
                                 });
@@ -824,11 +824,11 @@
                     return b
                 },
                 shouldRender: function() {
-                    return 0 == this.id ? true : this.x + this.size + 40 < t - r / 2 / k || this.y + this.size + 40 < u - s / 2 / k || this.x - this.size - 40 > t + r / 2 / k || this.y - this.size - 40 > u + s / 2 / k ? false : true
+                    return 0 == this.id ? true : this.x + this.size + 40 < t - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < u - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > t + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > u + canvasHeight / 2 / viewZoom ? false : true
                 },
                 drawOneCell: function(a) {
                     if (this.shouldRender()) {
-                        var b = 0 != this.id && !this.isVirus && !this.isAgitated && .4 > k;
+                        var b = 0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom;
                         5 > this.getNumPoints() && (b = true);
                         if (this.wasSimpleDrawing && !b)
                             for (var c = 0; c < this.points.length; c++) this.points[c].e = this.size;
@@ -869,7 +869,7 @@
                                 e = this.nameCache;
                                 e.setValue(this.name);
                                 e.setSize(this.getNameSize());
-                                d = Math.ceil(10 * k) / 10;
+                                d = Math.ceil(10 * viewZoom) / 10;
                                 e.setScale(d);
                                 var e = e.render(),
                                     m = ~~ (e.width / d),
@@ -877,7 +877,7 @@
                                 a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                                 b += e.height / 2 / d + 4
                             }
-                            showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size) && (null == this.sizeCache && (this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")), c = this.sizeCache, c.setSize(this.getNameSize() / 2), c.setValue(~~(this.size * this.size / 100)), d = Math.ceil(10 * k) / 10, c.setScale(d), e = c.render(), m = ~~ (e.width / d), h = ~~ (e.height / d), a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h))
+                            showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size) && (null == this.sizeCache && (this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")), c = this.sizeCache, c.setSize(this.getNameSize() / 2), c.setValue(~~(this.size * this.size / 100)), d = Math.ceil(10 * viewZoom) / 10, c.setScale(d), e = c.render(), m = ~~ (e.width / d), h = ~~ (e.height / d), a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h))
                         }
                         a.restore()
                     }
