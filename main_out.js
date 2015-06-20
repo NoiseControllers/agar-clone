@@ -38,7 +38,11 @@
             mouseCoordinateChange()
         };
         Canvas.onmouseup = function() {};
-        /firefox/i.test(navigator.userAgent) ? document.addEventListener("DOMMouseScroll", handleWheel, false) : document.body.onmousewheel = handleWheel;
+        if (/firefox/i.test(navigator.userAgent)) {
+            document.addEventListener("DOMMouseScroll", handleWheel, false);
+        } else {
+            document.body.onmousewheel = handleWheel;
+        }
         var spacePressed = false,
             qPressed = false,
             wPressed = false;
@@ -64,7 +68,7 @@
         setInterval(sendMouseMove, 40);
         w && wjQuery("#region").val(w);
         Ha();
-        W(wjQuery("#region").val());
+        setRegion(wjQuery("#region").val());
         null == ws && w && showConnecting();
         wjQuery("#overlays").show()
     }
@@ -79,7 +83,12 @@
     function buildQTree() {
         if (.4 > viewZoom) qTree = null;
         else {
-            for (var a = Number.POSITIVE_INFINITY, b = Number.POSITIVE_INFINITY, c = Number.NEGATIVE_INFINITY, d = Number.NEGATIVE_INFINITY, e = 0, i = 0; i < nodelist.length; i++) {
+            var a = Number.POSITIVE_INFINITY,
+                b = Number.POSITIVE_INFINITY,
+                c = Number.NEGATIVE_INFINITY,
+                d = Number.NEGATIVE_INFINITY,
+                e = 0;
+            for (var i = 0; i < nodelist.length; i++) {
                 var node = nodelist[i];
                 !node.shouldRender() || node.prepareData || 20 >= node.size * viewZoom || (e = Math.max(node.size, e), a = Math.min(node.x, a), b = Math.min(node.y, b), c = Math.max(node.x, c), d = Math.max(node.y, d))
             }
@@ -93,7 +102,11 @@
             });
             for (i = 0; i < nodelist.length; i++)
                 if (node = nodelist[i], node.shouldRender() && !(20 >= node.size * viewZoom))
-                    for (a = 0; a < node.points.length; ++a) b = node.points[a].x, c = node.points[a].y, b < t - canvasWidth / 2 / viewZoom || c < u - canvasHeight / 2 / viewZoom || b > t + canvasWidth / 2 / viewZoom || c > u + canvasHeight / 2 / viewZoom || qTree.insert(node.points[a])
+                    for (a = 0; a < node.points.length; ++a) {
+                        b = node.points[a].x;
+                        c = node.points[a].y;
+                        b < t - canvasWidth / 2 / viewZoom || c < u - canvasHeight / 2 / viewZoom || b > t + canvasWidth / 2 / viewZoom || c > u + canvasHeight / 2 / viewZoom || qTree.insert(node.points[a]);
+                    }
         }
     }
 
@@ -125,7 +138,7 @@
         Ha()
     }
 
-    function W(a) {
+    function setRegion(a) {
         a && a != w && (wjQuery("#region").val() != a && wjQuery("#region").val(a), w = wHandle.localStorage.location = a, wjQuery(".region-message").hide(), wjQuery(".region-message." + a).show(), wjQuery(".btn-needs-server").prop("disabled", false), ma && showConnecting())
     }
 
@@ -240,10 +253,10 @@
         var c = 0;
         240 == msg.getUint8(c) && (c += 5);
         switch (msg.getUint8(c++)) {
-            case 16:
+            case 16: // update nodes
                 ab(msg, c);
                 break;
-            case 17:
+            case 17: // update position
                 Q = msg.getFloat32(c, true);
                 c += 4;
                 R = msg.getFloat32(c, true);
@@ -251,22 +264,22 @@
                 S = msg.getFloat32(c, true);
                 c += 4;
                 break;
-            case 20:
+            case 20: // clear nodes
                 n = [];
                 G = [];
                 break;
-            case 21:
+            case 21: // draw line
                 ra = msg.getInt16(c, true);
                 c += 2;
                 sa = msg.getInt16(c, true);
                 c += 2;
                 ta || (ta = true, ca = ra, da = sa);
                 break;
-            case 32:
+            case 32: // add node
                 G.push(msg.getUint32(c, true));
                 c += 4;
                 break;
-            case 49:
+            case 49: // update leaderboard (ffa)
                 if (null != y) break;
                 var d = msg.getUint32(c, true),
                     c = c + 4;
@@ -281,14 +294,14 @@
                 }
                 drawLeaderBoard();
                 break;
-            case 50:
+            case 50: // update leaderboard (teams)
                 y = [];
                 d = msg.getUint32(c, true);
                 c += 4;
                 for (e = 0; e < d; ++e) y.push(msg.getFloat32(c, true)), c += 4;
                 drawLeaderBoard();
                 break;
-            case 64:
+            case 64: // set border
                 ea = msg.getFloat64(c, true), c += 8, fa = msg.getFloat64(c, true), c += 8, ga = msg.getFloat64(c, true), c += 8, ha = msg.getFloat64(c, true), c += 8, Q = (ga + ea) / 2, R = (ha + fa) / 2, S = 1, 0 == n.length && (t = Q, u = R, viewZoom = S)
         }
     }
@@ -603,7 +616,7 @@
                 Ka();
                 J = 0
             };
-            wHandle.setRegion = W;
+            wHandle.setRegion = setRegion;
             wHandle.setSkins = function(arg) {
                 showSkin = arg
             };
@@ -635,7 +648,7 @@
                 var b = a.split(" ");
                 a = b[0];
                 b = b[1] || ""; - 1 == "DE IL PL HU BR AT UA".split(" ").indexOf(a) && knownNameDict.push("nazi"); - 1 == ["UA"].indexOf(a) && knownNameDict.push("ussr");
-                T.hasOwnProperty(a) && ("string" == typeof T[a] ? w || W(T[a]) : T[a].hasOwnProperty(b) && (w || W(T[a][b])))
+                T.hasOwnProperty(a) && ("string" == typeof T[a] ? w || setRegion(T[a]) : T[a].hasOwnProperty(b) && (w || setRegion(T[a][b])))
             }, "text");
             setTimeout(function() {}, 3E5);
             var T = {
