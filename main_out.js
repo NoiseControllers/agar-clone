@@ -93,7 +93,7 @@
             });
             for (i = 0; i < v.length; i++)
                 if (h = v[i], h.shouldRender() && !(20 >= h.size * k))
-                    for (a = 0; a < h.a.length; ++a) b = h.a[a].x, c = h.a[a].y, b < t - r / 2 / k || c < u - s / 2 / k || b > t + r / 2 / k || c > u + s / 2 / k || M.insert(h.a[a])
+                    for (a = 0; a < h.points.length; ++a) b = h.points[a].x, c = h.points[a].y, b < t - r / 2 / k || c < u - s / 2 / k || b > t + r / 2 / k || c > u + s / 2 / k || M.insert(h.points[a])
         }
     }
 
@@ -173,7 +173,7 @@
         }
         var c = CONNECTION_URL;
         /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/.test(c) && 5 != +c.split(".")[0] && (wsUrl = "ws://" + c);
-        localProtocolHttps && (wsUrl = wsUrl.split(":"), wsUrl = wsUrl[0] + "s://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3));
+        localProtocolHttps && (wsUrl = wsUrl.split(":"), wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3));
         G = [];
         n = [];
         A = {};
@@ -303,7 +303,7 @@
             var m = A[a.getUint32(b, true)],
                 h = A[a.getUint32(b + 4, true)];
             b += 8;
-            m && h && (h.destory(), h.p = h.x, h.q = h.y, h.o = h.size, h.F = m.x, h.G = m.y, h.n = h.size, h.updateTime = H)
+            m && h && (h.destory(), h.ox = h.x, h.oy = h.y, h.oSize = h.size, h.nx = m.x, h.ny = m.y, h.nSize = h.size, h.updateTime = H)
         }
         for (e = 0;;) {
             d = a.getUint32(b, true);
@@ -333,15 +333,15 @@
             }
             q = p;
             p = null;
-            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.p = p.x, p.q = p.y, p.o = p.size, p.color = f) : (p = new va(d, m, h, g, f, q), v.push(p), A[d] = p, p.ka = m, p.la = h);
+            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new va(d, m, h, g, f, q), v.push(p), A[d] = p, p.ka = m, p.la = h);
             p.isVirus = l;
             p.isAgitated = r;
-            p.F = m;
-            p.G = h;
-            p.n = g;
+            p.nx = m;
+            p.ny = h;
+            p.nSize = g;
             p.updateCode = c;
             p.updateTime = H;
-            p.nSize = k;
+            p.nnn = k;
             q && p.setName(q); - 1 != G.indexOf(d) && -1 == n.indexOf(p) && (document.getElementById("overlays").style.display = "none", n.push(p), 1 == n.length && (t = p.x, u = p.y))
         }
         c = a.getUint32(b, true);
@@ -454,7 +454,7 @@
         ctx.restore();
         Canvas && Canvas.width && ctx.drawImage(Canvas, r - Canvas.width - 10, 10);
         J = Math.max(J, eb());
-        0 != J && (null == ja && (ja = new ka(24, "#FFFFFF")), ja.u("Score: " + ~~(J / 100)), c = ja.H(), a = c.width, ctx.globalAlpha = .2, ctx.fillStyle = "#000000", ctx.fillRect(10, s - 10 - 24 - 10, a + 10, 34), ctx.globalAlpha = 1, ctx.drawImage(c, 15, s - 10 - 24 - 5));
+        0 != J && (null == ja && (ja = new ka(24, "#FFFFFF")), ja.setValue("Score: " + ~~(J / 100)), c = ja.render(), a = c.width, ctx.globalAlpha = .2, ctx.fillStyle = "#000000", ctx.fillRect(10, s - 10 - 24 - 10, a + 10, 34), ctx.globalAlpha = 1, ctx.drawImage(c, 15, s - 10 - 24 - 5));
         drawSplitIcon();
         b = Date.now() - b;
         b > 1E3 / 60 ? z -= .01 : b < 1E3 / 65 && (z += .01);.4 > z && (z = .4);
@@ -481,7 +481,7 @@
     }
 
     function eb() {
-        for (var a = 0, b = 0; b < n.length; b++) a += n[b].n * n[b].n;
+        for (var a = 0, b = 0; b < n.length; b++) a += n[b].nSize * n[b].nSize;
         return a
     }
 
@@ -524,21 +524,21 @@
 
     function va(uid, ux, uy, usize, ucolor, m) {
         this.id = uid;
-        this.p = this.x = ux;
-        this.q = this.y = uy;
-        this.o = this.size = usize;
+        this.ox = this.x = ux;
+        this.oy = this.y = uy;
+        this.oSize = this.size = usize;
         this.color = ucolor;
-        this.a = [];
-        this.l = [];
+        this.points = [];
+        this.pointsAcc = [];
         this.createPoints();
         this.setName(m)
     }
 
     function ka(a, b, c, d) {
-        a && (this.r = a);
-        b && (this.P = b);
-        this.R = !! c;
-        d && (this.s = d)
+        a && (this._size = a);
+        b && (this._color = b);
+        this._stroke = !! c;
+        d && (this._strokeColor = d)
     }
     var localProtocol = wHandle.location.protocol,
         localProtocolHttps = "https:" == localProtocol;
@@ -602,31 +602,31 @@
                 J = 0
             };
             wHandle.setRegion = W;
-            wHandle.setSkins = function(a) {
-                showSkin = a
+            wHandle.setSkins = function(arg) {
+                showSkin = arg
             };
-            wHandle.setNames = function(a) {
-                showName = a
+            wHandle.setNames = function(arg) {
+                showName = arg
             };
-            wHandle.setDarkTheme = function(a) {
-                showDarkTheme = a
+            wHandle.setDarkTheme = function(arg) {
+                showDarkTheme = arg
             };
-            wHandle.setColors = function(a) {
-                showColor = a
+            wHandle.setColors = function(arg) {
+                showColor = arg
             };
-            wHandle.setShowMass = function(a) {
-                showMass = a
+            wHandle.setShowMass = function(arg) {
+                showMass = arg
             };
             wHandle.spectate = function() {
                 F = null;
                 D(1);
                 Ia()
             };
-            wHandle.setGameMode = function(a) {
-                a != N && (N = a, X())
+            wHandle.setGameMode = function(arg) {
+                arg != N && (N = arg, X())
             };
-            wHandle.setAcid = function(a) {
-                xa = a
+            wHandle.setAcid = function(arg) {
+                xa = arg
             };
             null != wHandle.localStorage && (null == wHandle.localStorage.AB8 && (wHandle.localStorage.AB8 = 0 + ~~(100 * Math.random())), Ra = +wHandle.localStorage.AB8, wHandle.ABGroup = Ra);
             wjQuery.get(localProtocol + "//gc.agar.io", function(a) {
@@ -642,11 +642,7 @@
             wHandle.connect = wsConnect;
 
 var data = {"action":"test"};
-
-
 var response = null;
-
-
 wjQuery.ajax({
  	type: "POST",
       dataType: "json",
@@ -656,16 +652,12 @@ wjQuery.ajax({
 	//alert(data["names"]);
 	response = JSON.parse(data["names"]);	
 }
-
 });
-
 
 
 var interval1Id = setInterval(function(){
     //console.log("logging every 5 seconds");
     //console.log(Aa);
-    
-
 
 wjQuery.ajax({
  	type: "POST",
@@ -676,7 +668,6 @@ wjQuery.ajax({
 	//alert(data["names"]);
 	response = JSON.parse(data["names"]);	
 }
-
 });
 	//console.log(response);
 	for (var i = 0; i < response.length; i++) {
@@ -686,7 +677,6 @@ wjQuery.ajax({
 	console.log("Add:"+response[i]);	
 	}
 }
-
 },15000);
 
 
@@ -700,24 +690,24 @@ wjQuery.ajax({
                 K = {},
                 knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
 		        hb = ["8", "nasa"],
-                ib = ["m'blob"];
+                ib = ["_canvas'blob"];
                 va.prototype = {
                 id: 0,
-                a: null,
-                l: null,
+                points: null,
+                pointsAcc: null,
                 name: null,
-                k: null,
-                L: null,
+                nameCache: null,
+                sizeCache: null,
                 x: 0,
                 y: 0,
                 size: 0,
-                p: 0,
-                q: 0,
-                o: 0,
-                F: 0,
-                G: 0,
-                n: 0,
+                ox: 0,
+                oy: 0,
+                oSize: 0,
+                nx: 0,
+                ny: 0,
                 nSize: 0,
+                nnn: 0,
                 updateTime: 0,
                 updateCode: 0,
                 drawTime: 0,
@@ -742,30 +732,30 @@ wjQuery.ajax({
                     return Math.max(~~(.3 * this.size), 24)
                 },
                 setName: function(a) {
-                    if (this.name = a) null == this.k ? this.k = new ka(this.getNameSize(), "#FFFFFF", true, "#000000") : this.k.J(this.getNameSize()), this.k.u(this.name)
+                    if (this.name = a) null == this.nameCache ? this.nameCache = new ka(this.getNameSize(), "#FFFFFF", true, "#000000") : this.nameCache.setSize(this.getNameSize()), this.nameCache.setValue(this.name)
                 },
                 createPoints: function() {
-                    for (var a = this.getNumPoints(); this.a.length > a;) {
-                        var b = ~~ (Math.random() * this.a.length);
-                        this.a.splice(b, 1);
-                        this.l.splice(b, 1)
+                    for (var a = this.getNumPoints(); this.points.length > a;) {
+                        var b = ~~ (Math.random() * this.points.length);
+                        this.points.splice(b, 1);
+                        this.pointsAcc.splice(b, 1)
                     }
-                    0 == this.a.length && 0 < a && (this.a.push({
+                    0 == this.points.length && 0 < a && (this.points.push({
                         S: this,
                         e: this.size,
                         x: this.x,
                         y: this.y
-                    }), this.l.push(Math.random() - .5));
-                    for (; this.a.length < a;) {
-                        var b = ~~ (Math.random() * this.a.length),
-                            c = this.a[b];
-                        this.a.splice(b, 0, {
+                    }), this.pointsAcc.push(Math.random() - .5));
+                    for (; this.points.length < a;) {
+                        var b = ~~ (Math.random() * this.points.length),
+                            c = this.points[b];
+                        this.points.splice(b, 0, {
                             S: this,
                             e: c.e,
                             x: c.x,
                             y: c.y
                         });
-                        this.l.splice(b, 0, this.l[b])
+                        this.pointsAcc.splice(b, 0, this.pointsAcc[b])
                     }
                 },
                 getNumPoints: function() {
@@ -776,12 +766,12 @@ wjQuery.ajax({
                     var b = this.size;
                     this.isVirus || (b *= k);
                     b *= z;
-                    this.nSize & 32 && (b *= .25);
+                    this.nnn & 32 && (b *= .25);
                     return~~ Math.max(b, a)
                 },
                 movePoints: function() {
                     this.createPoints();
-                    for (var a = this.a, b = this.l, c = a.length, d = 0; d < c; ++d) {
+                    for (var a = this.points, b = this.pointsAcc, c = a.length, d = 0; d < c; ++d) {
                         var e = b[(d - 1 + c) % c],
                             m = b[(d + 1) % c];
                         b[d] += (Math.random() - .5) * (this.isAgitated ? 3 : 1);
@@ -809,7 +799,7 @@ wjQuery.ajax({
                         f = this.isAgitated ? (19 * f + this.size) / 20 : (12 * f + this.size) / 13;
                         a[d].e = (e + m + 8 * f) / 10;
                         e = 2 * Math.PI / c;
-                        m = this.a[d].e;
+                        m = this.points[d].e;
                         this.isVirus && 0 == d % 2 && (m += 5);
                         a[d].x = this.x + Math.cos(e * d + g) * m;
                         a[d].y = this.y + Math.sin(e * d + g) * m
@@ -825,9 +815,9 @@ wjQuery.ajax({
                     if (this.destroyed && 1 <= b) {
                         var c = Cells.indexOf(this); - 1 != c && Cells.splice(c, 1)
                     }
-                    this.x = a * (this.F - this.p) + this.p;
-                    this.y = a * (this.G - this.q) + this.q;
-                    this.size = b * (this.n - this.o) + this.o;
+                    this.x = a * (this.nx - this.ox) + this.ox;
+                    this.y = a * (this.ny - this.oy) + this.oy;
+                    this.size = b * (this.nSize - this.oSize) + this.oSize;
                     return b
                 },
                 shouldRender: function() {
@@ -838,7 +828,7 @@ wjQuery.ajax({
                         var b = 0 != this.id && !this.isVirus && !this.isAgitated && .4 > k;
                         5 > this.getNumPoints() && (b = true);
                         if (this.wasSimpleDrawing && !b)
-                            for (var c = 0; c < this.a.length; c++) this.a[c].e = this.size;
+                            for (var c = 0; c < this.points.length; c++) this.points[c].e = this.size;
                         this.wasSimpleDrawing = b;
                         a.save();
                         this.drawTime = H;
@@ -853,10 +843,10 @@ wjQuery.ajax({
                             this.movePoints();
                             a.beginPath();
                             var d = this.getNumPoints();
-                            a.moveTo(this.a[0].x, this.a[0].y);
+                            a.moveTo(this.points[0].x, this.points[0].y);
                             for (c = 1; c <= d; ++c) {
                                 var e = c % d;
-                                a.lineTo(this.a[e].x, this.a[e].y)
+                                a.lineTo(this.points[e].x, this.points[e].y)
                             }
                         }
                         a.closePath();
@@ -872,55 +862,55 @@ wjQuery.ajax({
                         c = -1 != n.indexOf(this);
                         if (0 != this.id) {
                             b = ~~this.y;
-                            if ((showName || c) && this.name && this.k && (null == e || -1 == hb.indexOf(d))) {
-                                e = this.k;
-                                e.u(this.name);
-                                e.J(this.getNameSize());
+                            if ((showName || c) && this.name && this.nameCache && (null == e || -1 == hb.indexOf(d))) {
+                                e = this.nameCache;
+                                e.setValue(this.name);
+                                e.setSize(this.getNameSize());
                                 d = Math.ceil(10 * k) / 10;
-                                e.$(d);
-                                var e = e.H(),
+                                e.setScale(d);
+                                var e = e.render(),
                                     m = ~~ (e.width / d),
                                     h = ~~ (e.height / d);
                                 a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                                 b += e.height / 2 / d + 4
                             }
-                            showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size) && (null == this.L && (this.L = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")), c = this.L, c.J(this.getNameSize() / 2), c.u(~~(this.size * this.size / 100)), d = Math.ceil(10 * k) / 10, c.$(d), e = c.H(), m = ~~ (e.width / d), h = ~~ (e.height / d), a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h))
+                            showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size) && (null == this.sizeCache && (this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")), c = this.sizeCache, c.setSize(this.getNameSize() / 2), c.setValue(~~(this.size * this.size / 100)), d = Math.ceil(10 * k) / 10, c.setScale(d), e = c.render(), m = ~~ (e.width / d), h = ~~ (e.height / d), a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h))
                         }
                         a.restore()
                     }
                 }
             };
             ka.prototype = {
-                w: "",
-                P: "#000000",
-                R: false,
-                s: "#000000",
-                r: 16,
-                m: null,
-                Q: null,
-                g: false,
-                v: 1,
-                J: function(a) {
-                    this.r != a && (this.r = a, this.g = true)
+                _value: "",
+                _color: "#000000",
+                _stroke: false,
+                _strokeColor: "#000000",
+                _size: 16,
+                _canvas: null,
+                _ctx: null,
+                _dirty: false,
+                _scale: 1,
+                setSize: function(a) {
+                    this._size != a && (this._size = a, this._dirty = true)
                 },
-                $: function(a) {
-                    this.v != a && (this.v = a, this.g = true)
+                setScale: function(a) {
+                    this._scale != a && (this._scale = a, this._dirty = true)
                 },
                 setStrokeColor: function(a) {
-                    this.s != a && (this.s = a, this.g = true)
+                    this._strokeColor != a && (this._strokeColor = a, this._dirty = true)
                 },
-                u: function(a) {
-                    a != this.w && (this.w = a, this.g = true)
+                setValue: function(a) {
+                    a != this._value && (this._value = a, this._dirty = true)
                 },
-                H: function() {
-                    null == this.m && (this.m = document.createElement("canvas"), this.Q = this.m.getContext("2d"));
-                    if (this.g) {
-                        this.g = false;
-                        var a = this.m,
-                            b = this.Q,
-                            c = this.w,
-                            d = this.v,
-                            e = this.r,
+                render: function() {
+                    null == this._canvas && (this._canvas = document.createElement("canvas"), this._ctx = this._canvas.getContext("2d"));
+                    if (this._dirty) {
+                        this._dirty = false;
+                        var a = this._canvas,
+                            b = this._ctx,
+                            c = this._value,
+                            d = this._scale,
+                            e = this._size,
                             m = e + "px Ubuntu";
                         b.font = m;
                         var h = ~~ (.2 * e);
@@ -931,12 +921,12 @@ wjQuery.ajax({
                         b.scale(d, d);
                         b.globalAlpha = 1;
                         b.lineWidth = 3;
-                        b.strokeStyle = this.s;
-                        b.fillStyle = this.P;
-                        this.R && b.strokeText(c, 3, e - h / 2);
+                        b.strokeStyle = this._strokeColor;
+                        b.fillStyle = this._color;
+                        this._stroke && b.strokeText(c, 3, e - h / 2);
                         b.fillText(c, 3, e - h / 2)
                     }
-                    return this.m
+                    return this._canvas
                 }
             };
             Date.now || (Date.now = function() {
