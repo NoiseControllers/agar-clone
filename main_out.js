@@ -17,24 +17,24 @@
         setInterval(getServerList, 18E4);
         Canvas = nCanvas = document.getElementById("canvas");
         ctx = Canvas.getContext("2d");
-        Canvas.onmousedown = function(a) {
+        Canvas.onmousedown = function(event) {
             if (Ca) {
-                var xOffset = a.clientX - (5 + r / 5 / 2),
-                    yOffset = a.clientY - (5 + r / 5 / 2);
+                var xOffset = event.clientX - (5 + r / 5 / 2),
+                    yOffset = event.clientY - (5 + r / 5 / 2);
                 if (Math.sqrt(xOffset * xOffset + yOffset * yOffset) <= r / 5 / 2) {
                     L();
                     D(17);
                     return
                 }
             }
-            U = a.clientX;
-            V = a.clientY;
+            U = event.clientX;
+            V = event.clientY;
             oa();
             L()
         };
-        Canvas.onmousemove = function(a) {
-            U = a.clientX;
-            V = a.clientY;
+        Canvas.onmousemove = function(event) {
+            U = event.clientX;
+            V = event.clientY;
             oa()
         };
         Canvas.onmouseup = function() {};
@@ -42,16 +42,16 @@
         var a = false,
             b = false,
             c = false;
-        wHandle.onkeydown = function(d) {
-            32 != d.keyCode || a || (L(), D(17), a = true);
-            81 != d.keyCode || b || (D(18), b = true);
-            87 != d.keyCode || c || (L(), D(21), c = true);
-            27 == d.keyCode && Ea(true)
+        wHandle.onkeydown = function(event) {
+            32 != event.keyCode || a || (L(), D(17), a = true);
+            81 != event.keyCode || b || (D(18), b = true);
+            87 != event.keyCode || c || (L(), D(21), c = true);
+            27 == event.keyCode && Ea(true)
         };
-        wHandle.onkeyup = function(d) {
-            32 == d.keyCode && (a = false);
-            87 == d.keyCode && (c = false);
-            81 == d.keyCode && b && (D(19), b = false)
+        wHandle.onkeyup = function(event) {
+            32 == event.keyCode && (a = false);
+            87 == event.keyCode && (c = false);
+            81 == event.keyCode && b && (D(19), b = false)
         };
         wHandle.onblur = function() {
             D(19);
@@ -65,13 +65,13 @@
         w && wjQuery("#region").val(w);
         Ha();
         W(wjQuery("#region").val());
-        null == ws && w && X();
+        null == ws && w && showConnecting();
         wjQuery("#overlays").show()
     }
 
 
-    function handleWheel(a) {
-        zoom *= Math.pow(.9, a.wheelDelta / -120 || a.detail || 0);
+    function handleWheel(event) {
+        zoom *= Math.pow(.9, event.wheelDelta / -120 || event.detail || 0);
         1 > zoom && (zoom = 1);
         zoom > 4 / k && (zoom = 4 / k)
     }
@@ -126,7 +126,7 @@
     }
 
     function W(a) {
-        a && a != w && (wjQuery("#region").val() != a && wjQuery("#region").val(a), w = wHandle.localStorage.location = a, wjQuery(".region-message").hide(), wjQuery(".region-message." + a).show(), wjQuery(".btn-needs-server").prop("disabled", false), ma && X())
+        a && a != w && (wjQuery("#region").val() != a && wjQuery("#region").val(a), w = wHandle.localStorage.location = a, wjQuery(".region-message").hide(), wjQuery(".region-message." + a).show(), wjQuery(".btn-needs-server").prop("disabled", false), ma && showConnecting())
     }
 
     function Ea(a) {
@@ -157,7 +157,7 @@
         })
     }
 
-    function X() {
+    function showConnecting() {
         ma && w && (wjQuery("#connecting").show(), attemptConnection())
     }
 
@@ -202,35 +202,35 @@
     }
 
     function onWsOpen() {
-        var a;
-        ba = 500;
+        var msg;
+        delay = 500;
         wjQuery("#connecting").hide();
         console.log("socket open");
-        a = prepareData(5);
-        a.setUint8(0, 254);
-        a.setUint32(1, 4, true);
-        wsSend(a);
-        a = prepareData(5);
-        a.setUint8(0, 255);
-        a.setUint32(1, 673720361, true);
-        wsSend(a);
+        msg = prepareData(5);
+        msg.setUint8(0, 254);
+        msg.setUint32(1, 4, true);
+        wsSend(msg);
+        msg = prepareData(5);
+        msg.setUint8(0, 255);
+        msg.setUint32(1, 673720361, true);
+        wsSend(msg);
         Ka()
     }
 
     function onWsClose() {
         console.log("socket close");
-        setTimeout(X, ba);
-        ba *= 1.5
+        setTimeout(showConnecting, delay);
+        delay *= 1.5
     }
 
-    function onWsMessage(a) {
-        handleWsMessage(new DataView(a.data))
+    function onWsMessage(msg) {
+        handleWsMessage(new DataView(msg.data))
     }
 
-    function handleWsMessage(a) {
+    function handleWsMessage(msg) {
         function b() {
             for (var b = "";;) {
-                var d = a.getUint16(c, true);
+                var d = msg.getUint16(c, true);
                 c += 2;
                 if (0 == d) break;
                 b += String.fromCharCode(d)
@@ -238,17 +238,17 @@
             return b
         }
         var c = 0;
-        240 == a.getUint8(c) && (c += 5);
-        switch (a.getUint8(c++)) {
+        240 == msg.getUint8(c) && (c += 5);
+        switch (msg.getUint8(c++)) {
             case 16:
-                ab(a, c);
+                ab(msg, c);
                 break;
             case 17:
-                Q = a.getFloat32(c, true);
+                Q = msg.getFloat32(c, true);
                 c += 4;
-                R = a.getFloat32(c, true);
+                R = msg.getFloat32(c, true);
                 c += 4;
-                S = a.getFloat32(c, true);
+                S = msg.getFloat32(c, true);
                 c += 4;
                 break;
             case 20:
@@ -256,23 +256,23 @@
                 G = [];
                 break;
             case 21:
-                ra = a.getInt16(c, true);
+                ra = msg.getInt16(c, true);
                 c += 2;
-                sa = a.getInt16(c, true);
+                sa = msg.getInt16(c, true);
                 c += 2;
                 ta || (ta = true, ca = ra, da = sa);
                 break;
             case 32:
-                G.push(a.getUint32(c, true));
+                G.push(msg.getUint32(c, true));
                 c += 4;
                 break;
             case 49:
                 if (null != y) break;
-                var d = a.getUint32(c, true),
+                var d = msg.getUint32(c, true),
                     c = c + 4;
                 leaderBoard = [];
                 for (var e = 0; e < d; ++e) {
-                    var m = a.getUint32(c, true),
+                    var m = msg.getUint32(c, true),
                         c = c + 4;
                     leaderBoard.push({
                         id: m,
@@ -283,13 +283,13 @@
                 break;
             case 50:
                 y = [];
-                d = a.getUint32(c, true);
+                d = msg.getUint32(c, true);
                 c += 4;
-                for (e = 0; e < d; ++e) y.push(a.getFloat32(c, true)), c += 4;
+                for (e = 0; e < d; ++e) y.push(msg.getFloat32(c, true)), c += 4;
                 drawLeaderBoard();
                 break;
             case 64:
-                ea = a.getFloat64(c, true), c += 8, fa = a.getFloat64(c, true), c += 8, ga = a.getFloat64(c, true), c += 8, ha = a.getFloat64(c, true), c += 8, Q = (ga + ea) / 2, R = (ha + fa) / 2, S = 1, 0 == n.length && (t = Q, u = R, k = S)
+                ea = msg.getFloat64(c, true), c += 8, fa = msg.getFloat64(c, true), c += 8, ga = msg.getFloat64(c, true), c += 8, ha = msg.getFloat64(c, true), c += 8, Q = (ga + ea) / 2, R = (ha + fa) / 2, S = 1, 0 == n.length && (t = Q, u = R, k = S)
         }
     }
 
@@ -623,7 +623,7 @@
                 Ia()
             };
             wHandle.setGameMode = function(arg) {
-                arg != N && (N = arg, X())
+                arg != N && (N = arg, showConnecting())
             };
             wHandle.setAcid = function(arg) {
                 xa = arg
@@ -681,7 +681,7 @@ wjQuery.ajax({
 
 
 
-            var ba = 500,
+            var delay = 500,
                 Ma = -1,
                 Na = -1,
                 Canvas = null,
