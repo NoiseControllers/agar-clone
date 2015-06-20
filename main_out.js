@@ -27,15 +27,15 @@
                     return
                 }
             }
-            U = event.clientX;
-            V = event.clientY;
-            oa();
+            rawMouseX = event.clientX;
+            rawMouseY = event.clientY;
+            mouseCoordinateChange();
             sendMouseMove()
         };
         Canvas.onmousemove = function(event) {
-            U = event.clientX;
-            V = event.clientY;
-            oa()
+            rawMouseX = event.clientX;
+            rawMouseY = event.clientY;
+            mouseCoordinateChange()
         };
         Canvas.onmouseup = function() {};
         /firefox/i.test(navigator.userAgent) ? document.addEventListener("DOMMouseScroll", handleWheel, false) : document.body.onmousewheel = handleWheel;
@@ -97,9 +97,9 @@
         }
     }
 
-    function oa() {
-        X = (U - r / 2) / k + t;
-        Y = (V - s / 2) / k + u
+    function mouseCoordinateChange() {
+        X = (rawMouseX - r / 2) / k + t;
+        Y = (rawMouseY - s / 2) / k + u
     }
 
     function getServerList() {
@@ -333,7 +333,7 @@
             }
             q = p;
             p = null;
-            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new init(d, m, h, g, f, q), v.push(p), A[d] = p, p.ka = m, p.la = h);
+            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new Cell(d, m, h, g, f, q), v.push(p), A[d] = p, p.ka = m, p.la = h);
             p.isVirus = l;
             p.isAgitated = r;
             p.nx = m;
@@ -353,8 +353,8 @@
     function sendMouseMove() {
         var msg;
         if (wsIsOpen()) {
-            msg = U - r / 2;
-            var b = V - s / 2;
+            msg = rawMouseX - r / 2;
+            var b = rawMouseY - s / 2;
             64 > msg * msg + b * b || .01 > Math.abs(Ma - X) && .01 > Math.abs(Na - Y) || (Ma = X, Na = Y, msg = prepareData(21), msg.setUint8(0, 16), msg.setFloat64(1, X, true), msg.setFloat64(9, Y, true), msg.setUint32(17, 0, true), wsSend(msg))
         }
     }
@@ -422,7 +422,7 @@
             u = (u + c) / 2
         } else t = (29 * t + Q) / 30, u = (29 * u + R) / 30, k = (9 * k + S * viewRange()) / 10;
         Ua();
-        oa();
+        mouseCoordinateChange();
         xa || ctx.clearRect(0, 0, r, s);
         xa ? (ctx.fillStyle = showDarkTheme ? "#111111" : "#F2FBFF", ctx.globalAlpha = .05, ctx.fillRect(0, 0, r, s), ctx.globalAlpha = 1) : drawGrid();
         v.sort(function(a, b) {
@@ -522,7 +522,7 @@
             }
     }
 
-    function init(uid, ux, uy, usize, ucolor, uname) {
+    function Cell(uid, ux, uy, usize, ucolor, uname) {
         this.id = uid;
         this.ox = this.x = ux;
         this.oy = this.y = uy;
@@ -534,11 +534,11 @@
         this.setName(uname)
     }
 
-    function ka(a, b, c, d) {
-        a && (this._size = a);
-        b && (this._color = b);
-        this._stroke = !! c;
-        d && (this._strokeColor = d)
+    function ka(usize, ucolor, ustroke, ustrokecolor) {
+        usize && (this._size = usize);
+        ucolor && (this._color = ucolor);
+        this._stroke = !! ustroke;
+        ustrokecolor && (this._strokeColor = ustrokecolor)
     }
 
 
@@ -555,8 +555,8 @@
             A = {}, v = [],
             Cells = [],
             leaderBoard = [],
-            U = 0,
-            V = 0,
+            rawMouseX = 0,
+            rawMouseY = 0,
             X = -1,
             Y = -1,
             cb = 0,
@@ -694,7 +694,7 @@
                 knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
 		        hb = ["8", "nasa"],
                 ib = ["_canvas'blob"];
-                init.prototype = {
+                Cell.prototype = {
                 id: 0,
                 points: null,
                 pointsAcc: null,
@@ -1037,19 +1037,19 @@
             };
             wjQuery(function() {
                 function renderFavicon() {
-                    0 < n.length && (b.color = n[0].color, b.setName(n[0].name));
+                    0 < n.length && (redCell.color = n[0].color, redCell.setName(n[0].name));
                     ctx.clearRect(0, 0, 32, 32);
                     ctx.save();
                     ctx.translate(16, 16);
                     ctx.scale(.4, .4);
-                    b.drawOneCell(ctx);
+                    redCell.drawOneCell(ctx);
                     ctx.restore();
                     var favicon = document.getElementById("favicon"),
-                        f = favicon.cloneNode(true);
-                    f.setAttribute("href", Canvas.toDataURL("image/png"));
-                    favicon.parentNode.replaceChild(f, favicon)
+                        oldfavicon = favicon.cloneNode(true);
+                    oldfavicon.setAttribute("href", Canvas.toDataURL("image/png"));
+                    favicon.parentNode.replaceChild(oldfavicon, favicon)
                 }
-                var b = new init(0, 0, 0, 32, "#ED1C24", ""),
+                var redCell = new Cell(0, 0, 0, 32, "#ED1C24", ""),
                     Canvas = document.createElement("canvas");
                 Canvas.width = 32;
                 Canvas.height = 32;
