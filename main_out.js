@@ -333,7 +333,7 @@
             }
             q = p;
             p = null;
-            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new va(d, m, h, g, f, q), v.push(p), A[d] = p, p.ka = m, p.la = h);
+            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new init(d, m, h, g, f, q), v.push(p), A[d] = p, p.ka = m, p.la = h);
             p.isVirus = l;
             p.isAgitated = r;
             p.nx = m;
@@ -522,7 +522,7 @@
             }
     }
 
-    function va(uid, ux, uy, usize, ucolor, m) {
+    function init(uid, ux, uy, usize, ucolor, uname) {
         this.id = uid;
         this.ox = this.x = ux;
         this.oy = this.y = uy;
@@ -531,7 +531,7 @@
         this.points = [];
         this.pointsAcc = [];
         this.createPoints();
-        this.setName(m)
+        this.setName(uname)
     }
 
     function ka(a, b, c, d) {
@@ -694,7 +694,7 @@
                 knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
 		        hb = ["8", "nasa"],
                 ib = ["_canvas'blob"];
-                va.prototype = {
+                init.prototype = {
                 id: 0,
                 points: null,
                 pointsAcc: null,
@@ -1049,7 +1049,7 @@
                     f.setAttribute("href", Canvas.toDataURL("image/png"));
                     favicon.parentNode.replaceChild(f, favicon)
                 }
-                var b = new va(0, 0, 0, 32, "#ED1C24", ""),
+                var b = new init(0, 0, 0, 32, "#ED1C24", ""),
                     Canvas = document.createElement("canvas");
                 Canvas.width = 32;
                 Canvas.height = 32;
