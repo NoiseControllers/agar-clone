@@ -18,19 +18,19 @@
         Canvas = nCanvas = document.getElementById("canvas");
         ctx = Canvas.getContext("2d");
         Canvas.onmousedown = function(event) {
-            if (Ca) {
+            if (isTouchStart) {
                 var xOffset = event.clientX - (5 + r / 5 / 2),
                     yOffset = event.clientY - (5 + r / 5 / 2);
                 if (Math.sqrt(xOffset * xOffset + yOffset * yOffset) <= r / 5 / 2) {
-                    L();
-                    D(17);
+                    sendMouseMove();
+                    sendUint8(17);
                     return
                 }
             }
             U = event.clientX;
             V = event.clientY;
             oa();
-            L()
+            sendMouseMove()
         };
         Canvas.onmousemove = function(event) {
             U = event.clientX;
@@ -39,29 +39,29 @@
         };
         Canvas.onmouseup = function() {};
         /firefox/i.test(navigator.userAgent) ? document.addEventListener("DOMMouseScroll", handleWheel, false) : document.body.onmousewheel = handleWheel;
-        var a = false,
-            b = false,
-            c = false;
+        var spacePressed = false,
+            qPressed = false,
+            wPressed = false;
         wHandle.onkeydown = function(event) {
-            32 != event.keyCode || a || (L(), D(17), a = true);
-            81 != event.keyCode || b || (D(18), b = true);
-            87 != event.keyCode || c || (L(), D(21), c = true);
-            27 == event.keyCode && Ea(true)
+            32 != event.keyCode || spacePressed || (sendMouseMove(), sendUint8(17), spacePressed = true);//split
+            81 != event.keyCode || qPressed || (sendUint8(18), qPressed = true);//key q pressed
+            87 != event.keyCode || wPressed || (sendMouseMove(), sendUint8(21), wPressed = true);//eject mass
+            27 == event.keyCode && showOverlays(true)
         };
         wHandle.onkeyup = function(event) {
-            32 == event.keyCode && (a = false);
-            87 == event.keyCode && (c = false);
-            81 == event.keyCode && b && (D(19), b = false)
+            32 == event.keyCode && (spacePressed = false);
+            87 == event.keyCode && (wPressed = false);
+            81 == event.keyCode && qPressed && (sendUint8(19), qPressed = false)
         };
         wHandle.onblur = function() {
-            D(19);
-            c = b = a = false
+            sendUint8(19);
+            wPressed = qPressed = spacePressed = false
         };
 
         wHandle.onresize = canvasResize;
         canvasResize();
         wHandle.requestAnimationFrame ? wHandle.requestAnimationFrame(redrawGameScene) : setInterval(drawGameScene, 1E3 / 60);
-        setInterval(L, 40);
+        setInterval(sendMouseMove, 40);
         w && wjQuery("#region").val(w);
         Ha();
         W(wjQuery("#region").val());
@@ -98,8 +98,8 @@
     }
 
     function oa() {
-        Y = (U - r / 2) / k + t;
-        Z = (V - s / 2) / k + u
+        X = (U - r / 2) / k + t;
+        Y = (V - s / 2) / k + u
     }
 
     function getServerList() {
@@ -119,7 +119,7 @@
         }, "json")
     }
 
-    function Ia() {
+    function hideOverlays() {
         wjQuery("#adsBottom").hide();
         wjQuery("#overlays").hide();
         Ha()
@@ -129,7 +129,7 @@
         a && a != w && (wjQuery("#region").val() != a && wjQuery("#region").val(a), w = wHandle.localStorage.location = a, wjQuery(".region-message").hide(), wjQuery(".region-message." + a).show(), wjQuery(".btn-needs-server").prop("disabled", false), ma && showConnecting())
     }
 
-    function Ea(a) {
+    function showOverlays(a) {
         F = null;
         wjQuery("#overlays").fadeIn(a ? 200 : 3E3);
         a || wjQuery("#adsBottom").fadeIn(3E3)
@@ -347,24 +347,24 @@
         c = a.getUint32(b, true);
         b += 4;
         for (e = 0; e < c; e++) d = a.getUint32(b, true), b += 4, p = A[d], null != p && p.destory();
-        ua && 0 == n.length && Ea(false)
+        ua && 0 == n.length && showOverlays(false)
     }
 
-    function L() {
-        var a;
+    function sendMouseMove() {
+        var msg;
         if (wsIsOpen()) {
-            a = U - r / 2;
+            msg = U - r / 2;
             var b = V - s / 2;
-            64 > a * a + b * b || .01 > Math.abs(Ma - Y) && .01 > Math.abs(Na - Z) || (Ma = Y, Na = Z, a = prepareData(21), a.setUint8(0, 16), a.setFloat64(1, Y, true), a.setFloat64(9, Z, true), a.setUint32(17, 0, true), wsSend(a))
+            64 > msg * msg + b * b || .01 > Math.abs(Ma - X) && .01 > Math.abs(Na - Y) || (Ma = X, Na = Y, msg = prepareData(21), msg.setUint8(0, 16), msg.setFloat64(1, X, true), msg.setFloat64(9, Y, true), msg.setUint32(17, 0, true), wsSend(msg))
         }
     }
 
     function Ka() {
         if (wsIsOpen() && null != F) {
-            var a = prepareData(1 + 2 * F.length);
-            a.setUint8(0, 0);
-            for (var b = 0; b < F.length; ++b) a.setUint16(1 + 2 * b, F.charCodeAt(b), true);
-            wsSend(a)
+            var msg = prepareData(1 + 2 * F.length);
+            msg.setUint8(0, 0);
+            for (var b = 0; b < F.length; ++b) msg.setUint16(1 + 2 * b, F.charCodeAt(b), true);
+            wsSend(msg)
         }
     }
 
@@ -372,11 +372,11 @@
         return null != ws && ws.readyState == ws.OPEN
     }
 
-    function D(a) {
+    function sendUint8(a) {
         if (wsIsOpen()) {
-            var b = prepareData(1);
-            b.setUint8(0, a);
-            wsSend(b)
+            var msg = prepareData(1);
+            msg.setUint8(0, a);
+            wsSend(msg)
         }
     }
 
@@ -474,7 +474,7 @@
     }
 
     function drawSplitIcon() {
-        if (Ca && splitIcon.width) {
+        if (isTouchStart && splitIcon.width) {
             var a = r / 5;
             ctx.drawImage(splitIcon, 5, 5, a, a)
         }
@@ -512,7 +512,7 @@
                 else
                     for (b = c = 0; b < y.length; ++b) {
                         var d = c + y[b] * Math.PI * 2;
-                        ctx.fillStyle = gb[b + 1];
+                        ctx.fillStyle = teamColor[b + 1];
                         ctx.beginPath();
                         ctx.moveTo(100, 140);
                         ctx.arc(100, 140, 80, c, d, false);
@@ -540,6 +540,8 @@
         this._stroke = !! c;
         d && (this._strokeColor = d)
     }
+
+
     var localProtocol = wHandle.location.protocol,
         localProtocolHttps = "https:" == localProtocol;
     if (wHandle.location.ancestorOrigins && wHandle.location.ancestorOrigins.length && "https://apps.facebook.com" != wHandle.location.ancestorOrigins[0]) wHandle.top.location = "http://agar.io/";
@@ -555,8 +557,8 @@
             leaderBoard = [],
             U = 0,
             V = 0,
+            X = -1,
             Y = -1,
-            Z = -1,
             cb = 0,
             H = 0,
             F = null,
@@ -585,19 +587,19 @@
             ca = 0,
             da = 0,
             Ra = 0,
-            gb = ["#333333", "#FF3333", "#33FF33", "#3333FF"],
+            teamColor = ["#333333", "#FF3333", "#33FF33", "#3333FF"],
             xa = false,
             zoom = 1,
-            Ca = "ontouchstart" in wHandle && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            isTouchStart = "ontouchstart" in wHandle && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
             splitIcon = new Image;
         splitIcon.src = "http://agar.io/img/split.png";
         var Sa = document.createElement("canvas");
         if ("undefined" == typeof console || "undefined" == typeof DataView || "undefined" == typeof WebSocket || null == Sa || null == Sa.getContext || null == wHandle.localStorage) alert("You browser does not support this game, we recommend you to use Firefox to play this");
         else {
             var $ = null;
-            wHandle.setNick = function(a) {
-                Ia();
-                F = a;
+            wHandle.setNick = function(arg) {
+                hideOverlays();
+                F = arg;
                 Ka();
                 J = 0
             };
@@ -619,8 +621,8 @@
             };
             wHandle.spectate = function() {
                 F = null;
-                D(1);
-                Ia()
+                sendUint8(1);
+                hideOverlays()
             };
             wHandle.setGameMode = function(arg) {
                 arg != N && (N = arg, showConnecting())
@@ -640,7 +642,6 @@
                 ZW: "EU-London"
             };
             wHandle.connect = wsConnect;
-
 
             //This part is for loading custon skins
             var data = {"action":"test"};
@@ -1035,7 +1036,7 @@
                 }
             };
             wjQuery(function() {
-                function a() {
+                function renderFavicon() {
                     0 < n.length && (b.color = n[0].color, b.setName(n[0].name));
                     ctx.clearRect(0, 0, 32, 32);
                     ctx.save();
@@ -1053,8 +1054,8 @@
                 Canvas.width = 32;
                 Canvas.height = 32;
                 var ctx = Canvas.getContext("2d");
-                a();
-                setInterval(a, 1E3)
+                renderFavicon();
+                setInterval(renderFavicon, 1E3)
             });
             wHandle.onload = gameLoop
         }
