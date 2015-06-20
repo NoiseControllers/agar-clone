@@ -19,7 +19,10 @@ The upload module does two things. The first is to upload a skin onto skins fold
 
 To make this feature work, you need to give upload.php priviliage to read skins folder. 
 
-> chmod 777 skins 
+```
+chmod 777 skins 
+
+```
 
 will make it work.
 

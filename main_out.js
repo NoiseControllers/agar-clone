@@ -641,43 +641,45 @@
             };
             wHandle.connect = wsConnect;
 
-var data = {"action":"test"};
-var response = null;
-wjQuery.ajax({
- 	type: "POST",
-      dataType: "json",
-      url: "checkdir.php", //Relative or absolute path to response.php file
-      data: data,
-      success: function(data) {
-	//alert(data["names"]);
-	response = JSON.parse(data["names"]);	
-}
-});
+
+            //This part is for loading custon skins
+            var data = {"action":"test"};
+            var response = null;
+            wjQuery.ajax({
+                type: "POST",
+                  dataType: "json",
+                  url: "checkdir.php", //Relative or absolute path to response.php file
+                  data: data,
+                  success: function(data) {
+                //alert(data["names"]);
+                response = JSON.parse(data["names"]);
+            }
+            });
 
 
-var interval1Id = setInterval(function(){
-    //console.log("logging every 5 seconds");
-    //console.log(Aa);
+            var interval1Id = setInterval(function(){
+                //console.log("logging every 5 seconds");
+                //console.log(Aa);
 
-wjQuery.ajax({
- 	type: "POST",
-      dataType: "json",
-      url: "checkdir.php", //Relative or absolute path to response.php file
-      data: data,
-      success: function(data) {
-	//alert(data["names"]);
-	response = JSON.parse(data["names"]);	
-}
-});
-	//console.log(response);
-	for (var i = 0; i < response.length; i++) {
-    	//console.log(response[insert]);
-	if (-1 == knownNameDict.indexOf(response[i])) {
-	knownNameDict.push(response[i]);
-	console.log("Add:"+response[i]);	
-	}
-}
-},15000);
+            wjQuery.ajax({
+                type: "POST",
+                  dataType: "json",
+                  url: "checkdir.php", //Relative or absolute path to response.php file
+                  data: data,
+                  success: function(data) {
+                //alert(data["names"]);
+                response = JSON.parse(data["names"]);
+            }
+            });
+                //console.log(response);
+                for (var i = 0; i < response.length; i++) {
+                    //console.log(response[insert]);
+                if (-1 == knownNameDict.indexOf(response[i])) {
+                knownNameDict.push(response[i]);
+                console.log("Add:"+response[i]);
+                }
+            }
+            },15000);
 
 
 
