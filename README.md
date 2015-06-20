@@ -7,6 +7,8 @@ This is a clone of agar.io. In this project we aim to acheive the following.
 - [x] Add uploading custom skins features (Done)
 - [ ] Add in-game chat feature. (On-going)
 - [ ] Support multi-server feature (On-going)
+
+
 ##Setup
 
 You can use nginx that support PHP to deploy it on your server. 
