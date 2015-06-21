@@ -11,6 +11,7 @@
      * To take skins from the official server enter: "http://agar.io/skins/"
      */
     var SKIN_URL = "./skins/";//skins folder
+
     function gameLoop() {
         ma = true;
         getServerList();
@@ -250,7 +251,8 @@
             }
             return b
         }
-        var c = 0;
+        var c = 0,
+            setCustomLB = false;
         240 == msg.getUint8(c) && (c += 5);
         switch (msg.getUint8(c++)) {
             case 16: // update nodes
@@ -279,7 +281,13 @@
                 G.push(msg.getUint32(c, true));
                 c += 4;
                 break;
+            case 48: // update leaderboard (custom text)
+                setCustomLB = true;
+                noRanking = true;
             case 49: // update leaderboard (ffa)
+                if (!setCustomLB){
+                    noRanking = false;
+                }
                 if (null != y) break;
                 var d = msg.getUint32(c, true),
                     c = c + 4;
@@ -519,10 +527,29 @@
                 c = "Leaderboard";
                 ctx.font = "30px Ubuntu";
                 ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 40);
-                if (null == y)
-                    for (ctx.font = "20px Ubuntu", b = 0; b < leaderBoard.length; ++b) c =
-                        leaderBoard[b].name || "An unnamed cell", showName || (c = "An unnamed cell"), -1 != G.indexOf(leaderBoard[b].id) ? (n[0].name && (c = n[0].name), ctx.fillStyle = "#FFAAAA") : ctx.fillStyle = "#FFFFFF", c = b + 1 + ". " + c, ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 70 + 24 * b);
-                else
+                if (null == y) {
+                    for (ctx.font = "20px Ubuntu", b = 0; b < leaderBoard.length; ++b) {
+                        c = leaderBoard[b].name || "An unnamed cell";
+                        if (!showName) {
+                            (c = "An unnamed cell");
+                        }
+                        if (-1 != G.indexOf(leaderBoard[b].id)) {
+                            n[0].name && (c = n[0].name);
+                            ctx.fillStyle = "#FFAAAA";
+                            if (!noRanking) {
+                                c = b + 1 + ". " + c;
+                            }
+                            ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 70 + 24 * b);
+                        } else {
+                            ctx.fillStyle = "#FFFFFF";
+                            if (!noRanking) {
+                                c = b + 1 + ". " + c;
+                            }
+                            ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 70 + 24 * b);
+                        }
+                    }
+                }
+                else {
                     for (b = c = 0; b < y.length; ++b) {
                         var d = c + y[b] * Math.PI * 2;
                         ctx.fillStyle = teamColor[b + 1];
@@ -532,6 +559,7 @@
                         ctx.fill();
                         c = d
                     }
+                }
             }
     }
 
@@ -604,7 +632,8 @@
             xa = false,
             zoom = 1,
             isTouchStart = "ontouchstart" in wHandle && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-            splitIcon = new Image;
+            splitIcon = new Image,
+            noRanking = false;
         splitIcon.src = "http://agar.io/img/split.png";
         var Sa = document.createElement("canvas");
         if ("undefined" == typeof console || "undefined" == typeof DataView || "undefined" == typeof WebSocket || null == Sa || null == Sa.getContext || null == wHandle.localStorage) alert("You browser does not support this game, we recommend you to use Firefox to play this");
