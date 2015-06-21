@@ -408,60 +408,94 @@
         }
     }
 
-    function updateNodes(a, b) {
+    function updateNodes(view, offset) {
         timestamp = +new Date;
         var code = Math.random();
         ua = false;
-        var d = a.getUint16(b, true);
-        b += 2;
-        for (var e = 0; e < d; ++e) {
-            var m = A[a.getUint32(b, true)],
-                h = A[a.getUint32(b + 4, true)];
-            b += 8;
-            m && h && (h.destroy(), h.ox = h.x, h.oy = h.y, h.oSize = h.size, h.nx = m.x, h.ny = m.y, h.nSize = h.size, h.updateTime = timestamp)
-        }
-        for (e = 0;;) {
-            d = a.getUint32(b, true);
-            b += 4;
-            if (0 == d) break;
-            ++e;
-            var g, m = a.getInt16(b, true);
-            b += 2;
-            h = a.getInt16(b, true);
-            b += 2;
-            g = a.getInt16(b, true);
-            b += 2;
-            for (var f = a.getUint8(b++), k = a.getUint8(b++), l = a.getUint8(b++),
-                    f = (f << 16 | k << 8 | l).toString(16); 6 > f.length;) f = "0" + f;
-            var f = "#" + f,
-                k = a.getUint8(b++),
-                l = !! (k & 1),
-                r = !! (k & 16);
-            k & 2 && (b += 4);
-            k & 4 && (b += 8);
-            k & 8 && (b += 16);
-            for (var q, p = "";;) {
-                q = a.getUint16(b, true);
-                b += 2;
-                if (0 == q) break;
-                p += String.fromCharCode(q)
+        var queueLength = view.getUint16(offset, true);
+        offset += 2;
+        for (var i = 0; i < queueLength; ++i) {
+            var killer = A[view.getUint32(offset, true)],
+                killedNode = A[view.getUint32(offset + 4, true)];
+            offset += 8;
+            if (killer && killedNode) {
+                killedNode.destroy();
+                killedNode.ox = killedNode.x;
+                killedNode.oy = killedNode.y;
+                killedNode.oSize = killedNode.size;
+                killedNode.nx = killer.x;
+                killedNode.ny = killer.y;
+                killedNode.nSize = killedNode.size;
+                killedNode.updateTime = timestamp;
             }
-            q = p;
-            p = null;
-            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new Cell(d, m, h, g, f, q), nodelist.push(p), A[d] = p, p.ka = m, p.la = h);
-            p.isVirus = l;
-            p.isAgitated = r;
-            p.nx = m;
-            p.ny = h;
-            p.nSize = g;
-            p.updateCode = code;
-            p.updateTime = timestamp;
-            p.nnn = k;
-            q && p.setName(q); - 1 != G.indexOf(d) && -1 == n.indexOf(p) && (document.getElementById("overlays").style.display = "none", n.push(p), 1 == n.length && (t = p.x, u = p.y))
         }
-        code = a.getUint32(b, true);
-        b += 4;
-        for (e = 0; e < code; e++) d = a.getUint32(b, true), b += 4, p = A[d], null != p && p.destroy();
+        for (var i = 0; ;) {
+            var nodeId = view.getUint32(offset, true);
+            offset += 4;
+            if (0 == nodeId) break;
+            ++i;
+            var size, posY, posX = view.getInt16(offset, true);
+            offset += 2;
+            posY = view.getInt16(offset, true);
+            offset += 2;
+            size = view.getInt16(offset, true);
+            offset += 2;
+            for (var r = view.getUint8(offset++), g = view.getUint8(offset++), b = view.getUint8(offset++),
+                     color = (r << 16 | g << 8 | b).toString(16); 6 > color.length;) color = "0" + color;
+            var color = "#" + color,
+                flags = view.getUint8(offset++),
+                flagVirus = !!(flags & 1),
+                flagAgitated = !!(flags & 16);
+            flags & 2 && (offset += 4);
+            flags & 4 && (offset += 8);
+            flags & 8 && (offset += 16);
+            for (var char, name = ""; ;) {
+                char = view.getUint16(offset, true);
+                offset += 2;
+                if (0 == char) break;
+                name += String.fromCharCode(char)
+            }
+            var node = null;
+            if (A.hasOwnProperty(nodeId)) {
+                node = A[nodeId];
+                node.updatePos();
+                node.ox = node.x;
+                node.oy = node.y;
+                node.oSize = node.size;
+                node.color = color;
+            } else {
+                node = new Cell(nodeId, posX, posY, size, color, name);
+                nodelist.push(node);
+                A[nodeId] = node;
+                node.ka = posX;
+                node.la = posY;
+            }
+            node.isVirus = flagVirus;
+            node.isAgitated = flagAgitated;
+            node.nx = posX;
+            node.ny = posY;
+            node.nSize = size;
+            node.updateCode = code;
+            node.updateTime = timestamp;
+            node.nnn = flags;
+            name && node.setName(name);
+            if (-1 != G.indexOf(nodeId) && -1 == n.indexOf(node)) {
+                document.getElementById("overlays").style.display = "none";
+                n.push(node);
+                if (1 == n.length) {
+                    t = node.x;
+                    u = node.y;
+                }
+            }
+        }
+        var queueLength = view.getUint32(offset, true);
+        offset += 4;
+        for (var i = 0; i < queueLength; i++) {
+            var nodeId = view.getUint32(offset, true);
+            offset += 4;
+            node = A[nodeId];
+            null != node && node.destroy();
+        }
         ua && 0 == n.length && showOverlays(false)
     }
 
