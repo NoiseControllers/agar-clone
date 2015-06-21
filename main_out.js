@@ -1,9 +1,9 @@
-(function(wHandle, wjQuery) {
+(function (wHandle, wjQuery) {
     /**
      * Enter url in the following format: HOST : PORT
      *
      * Example: 127.0.0.1:443
-     * 
+     *
      */
     var CONNECTION_URL = "162.243.157.40:443";
     /**
@@ -11,13 +11,14 @@
      * To take skins from the official server enter: "http://agar.io/skins/"
      */
     var SKIN_URL = "./skins/";//skins folder
+
     function gameLoop() {
         ma = true;
         getServerList();
         setInterval(getServerList, 18E4);
         Canvas = nCanvas = document.getElementById("canvas");
         ctx = Canvas.getContext("2d");
-        Canvas.onmousedown = function(event) {
+        Canvas.onmousedown = function (event) {
             if (isTouchStart) {
                 var xOffset = event.clientX - (5 + canvasWidth / 5 / 2),
                     yOffset = event.clientY - (5 + canvasWidth / 5 / 2);
@@ -32,39 +33,81 @@
             mouseCoordinateChange();
             sendMouseMove()
         };
-        Canvas.onmousemove = function(event) {
+        Canvas.onmousemove = function (event) {
             rawMouseX = event.clientX;
             rawMouseY = event.clientY;
             mouseCoordinateChange()
         };
-        Canvas.onmouseup = function() {};
-        /firefox/i.test(navigator.userAgent) ? document.addEventListener("DOMMouseScroll", handleWheel, false) : document.body.onmousewheel = handleWheel;
+        Canvas.onmouseup = function () {
+        };
+        if (/firefox/i.test(navigator.userAgent)) {
+            document.addEventListener("DOMMouseScroll", handleWheel, false);
+        } else {
+            document.body.onmousewheel = handleWheel;
+        }
         var spacePressed = false,
             qPressed = false,
             wPressed = false;
-        wHandle.onkeydown = function(event) {
-            32 != event.keyCode || spacePressed || (sendMouseMove(), sendUint8(17), spacePressed = true);//split
-            81 != event.keyCode || qPressed || (sendUint8(18), qPressed = true);//key q pressed
-            87 != event.keyCode || wPressed || (sendMouseMove(), sendUint8(21), wPressed = true);//eject mass
-            27 == event.keyCode && showOverlays(true)
+        wHandle.onkeydown = function (event) {
+            switch (event.keyCode) {
+                case 32: // split
+                    if (!spacePressed) {
+                        sendMouseMove();
+                        sendUint8(17);
+                        spacePressed = true;
+                    }
+                    break;
+                case 81: // key q pressed
+                    if (!qPressed) {
+                        sendUint8(18);
+                        qPressed = true;
+                    }
+                    break;
+                case 87: // eject mass
+                    if (!wPressed) {
+                        sendMouseMove();
+                        sendUint8(21);
+                        wPressed = true;
+                    }
+                    break;
+                case 27: // quit
+                    showOverlays(true);
+                    break;
+            }
         };
-        wHandle.onkeyup = function(event) {
-            32 == event.keyCode && (spacePressed = false);
-            87 == event.keyCode && (wPressed = false);
-            81 == event.keyCode && qPressed && (sendUint8(19), qPressed = false)
+        wHandle.onkeyup = function (event) {
+            switch (event.keyCode) {
+                case 32:
+                    spacePressed = false;
+                    break;
+                case 87:
+                    wPressed = false;
+                    break;
+                case 81:
+                    if (qPressed) {
+                        sendUint8(19);
+                        qPressed = false;
+                    }
+            }
         };
-        wHandle.onblur = function() {
+        wHandle.onblur = function () {
             sendUint8(19);
             wPressed = qPressed = spacePressed = false
         };
 
         wHandle.onresize = canvasResize;
         canvasResize();
-        wHandle.requestAnimationFrame ? wHandle.requestAnimationFrame(redrawGameScene) : setInterval(drawGameScene, 1E3 / 60);
+        if (wHandle.requestAnimationFrame) {
+            wHandle.requestAnimationFrame(redrawGameScene);
+        } else {
+            setInterval(drawGameScene, 1E3 / 60);
+        }
         setInterval(sendMouseMove, 40);
-        w && wjQuery("#region").val(w);
+        if (w) {
+            wjQuery("#region").val(w);
+        }
         Ha();
-        W(wjQuery("#region").val());
+        setRegion(wjQuery("#region").val());
         null == ws && w && showConnecting();
         wjQuery("#overlays").show()
     }
@@ -79,9 +122,20 @@
     function buildQTree() {
         if (.4 > viewZoom) qTree = null;
         else {
-            for (var a = Number.POSITIVE_INFINITY, b = Number.POSITIVE_INFINITY, c = Number.NEGATIVE_INFINITY, d = Number.NEGATIVE_INFINITY, e = 0, i = 0; i < nodelist.length; i++) {
+            var a = Number.POSITIVE_INFINITY,
+                b = Number.POSITIVE_INFINITY,
+                c = Number.NEGATIVE_INFINITY,
+                d = Number.NEGATIVE_INFINITY,
+                e = 0;
+            for (var i = 0; i < nodelist.length; i++) {
                 var node = nodelist[i];
-                !node.shouldRender() || node.prepareData || 20 >= node.size * viewZoom || (e = Math.max(node.size, e), a = Math.min(node.x, a), b = Math.min(node.y, b), c = Math.max(node.x, c), d = Math.max(node.y, d))
+                if (node.shouldRender() && !node.prepareData && 20 < node.size * viewZoom) {
+                    e = Math.max(node.size, e);
+                    a = Math.min(node.x, a);
+                    b = Math.min(node.y, b);
+                    c = Math.max(node.x, c);
+                    d = Math.max(node.y, d);
+                }
             }
             qTree = Quad.init({
                 minX: a - (e + 100),
@@ -91,9 +145,16 @@
                 maxChildren: 2,
                 maxDepth: 4
             });
-            for (i = 0; i < nodelist.length; i++)
-                if (node = nodelist[i], node.shouldRender() && !(20 >= node.size * viewZoom))
-                    for (a = 0; a < node.points.length; ++a) b = node.points[a].x, c = node.points[a].y, b < t - canvasWidth / 2 / viewZoom || c < u - canvasHeight / 2 / viewZoom || b > t + canvasWidth / 2 / viewZoom || c > u + canvasHeight / 2 / viewZoom || qTree.insert(node.points[a])
+            for (i = 0; i < nodelist.length; i++) {
+                node = nodelist[i];
+                if (node.shouldRender() && !(20 >= node.size * viewZoom)) {
+                    for (a = 0; a < node.points.length; ++a) {
+                        b = node.points[a].x;
+                        c = node.points[a].y;
+                        b < t - canvasWidth / 2 / viewZoom || c < u - canvasHeight / 2 / viewZoom || b > t + canvasWidth / 2 / viewZoom || c > u + canvasHeight / 2 / viewZoom || qTree.insert(node.points[a]);
+                    }
+                }
+            }
         }
     }
 
@@ -103,12 +164,15 @@
     }
 
     function getServerList() {
-        null == $ && ($ = {}, wjQuery("#region").children().each(function() {
-            var a = wjQuery(this),
-                b = a.val();
-            b && ($[b] = a.text())
-        }));
-        wjQuery.get("info.php", function(a) {
+        if (null == $) {
+            $ = {};
+            wjQuery("#region").children().each(function () {
+                var a = wjQuery(this),
+                    b = a.val();
+                b && ($[b] = a.text())
+            });
+        }
+        wjQuery.get("info.php", function (a) {
             var b = {}, c;
             for (c in a.regions) {
                 var d = c.split(":")[0];
@@ -125,8 +189,17 @@
         Ha()
     }
 
-    function W(a) {
-        a && a != w && (wjQuery("#region").val() != a && wjQuery("#region").val(a), w = wHandle.localStorage.location = a, wjQuery(".region-message").hide(), wjQuery(".region-message." + a).show(), wjQuery(".btn-needs-server").prop("disabled", false), ma && showConnecting())
+    function setRegion(a) {
+        if (a && a != w) {
+            if (wjQuery("#region").val() != a) {
+                wjQuery("#region").val(a);
+            }
+            w = wHandle.localStorage.location = a;
+            wjQuery(".region-message").hide();
+            wjQuery(".region-message." + a).show();
+            wjQuery(".btn-needs-server").prop("disabled", false);
+            ma && showConnecting();
+        }
     }
 
     function showOverlays(a) {
@@ -143,10 +216,10 @@
     function attemptConnection() {
         console.log("Find " + w + N);
         wjQuery.ajax("main.php", {
-            error: function() {
+            error: function () {
                 setTimeout(attemptConnection, 1E3)
             },
-            success: function(a) {
+            success: function (a) {
                 wsConnect("ws://" + CONNECTION_URL)
             },
             dataType: "text",
@@ -158,7 +231,10 @@
     }
 
     function showConnecting() {
-        ma && w && (wjQuery("#connecting").show(), attemptConnection())
+        if (ma && w) {
+            wjQuery("#connecting").show();
+            attemptConnection()
+        }
     }
 
     function wsConnect(wsUrl) {
@@ -168,12 +244,18 @@
             ws.onclose = null;
             try {
                 ws.close()
-            } catch (b) {}
+            } catch (b) {
+            }
             ws = null
         }
         var c = CONNECTION_URL;
-        /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/.test(c) && 5 != +c.split(".")[0] && (wsUrl = "ws://" + c);
-        localProtocolHttps && (wsUrl = wsUrl.split(":"), wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3));
+        if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/.test(c) && 5 != +c.split(".")[0]) {
+            wsUrl = "ws://" + c;
+        }
+        if (localProtocolHttps) {
+            wsUrl = wsUrl.split(":");
+            wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3);
+        }
         G = [];
         n = [];
         A = {};
@@ -188,7 +270,7 @@
         ws.onopen = onWsOpen;
         ws.onmessage = onWsMessage;
         ws.onclose = onWsClose;
-        ws.onerror = function() {
+        ws.onerror = function () {
             console.log("socket error")
         }
     }
@@ -228,125 +310,204 @@
     }
 
     function handleWsMessage(msg) {
-        function b() {
-            for (var b = "";;) {
-                var d = msg.getUint16(c, true);
-                c += 2;
-                if (0 == d) break;
-                b += String.fromCharCode(d)
+        function getString() {
+            var text = '',
+                char = 0;
+            while ((char = msg.getUint16(offset, true)) != 0) {
+                offset += 2;
+                text += String.fromCharCode(char);
             }
-            return b
+            offset += 2;
+            return text;
         }
-        var c = 0;
-        240 == msg.getUint8(c) && (c += 5);
-        switch (msg.getUint8(c++)) {
-            case 16:
-                ab(msg, c);
+
+        var offset = 0,
+            setCustomLB = false;
+        240 == msg.getUint8(offset) && (offset += 5);
+        switch (msg.getUint8(offset++)) {
+            case 16: // update nodes
+                updateNodes(msg, offset);
                 break;
-            case 17:
-                Q = msg.getFloat32(c, true);
-                c += 4;
-                R = msg.getFloat32(c, true);
-                c += 4;
-                S = msg.getFloat32(c, true);
-                c += 4;
+            case 17: // update position
+                posX = msg.getFloat32(offset, true);
+                offset += 4;
+                posY = msg.getFloat32(offset, true);
+                offset += 4;
+                posSize = msg.getFloat32(offset, true);
+                offset += 4;
                 break;
-            case 20:
+            case 20: // clear nodes
                 n = [];
                 G = [];
                 break;
-            case 21:
-                ra = msg.getInt16(c, true);
-                c += 2;
-                sa = msg.getInt16(c, true);
-                c += 2;
-                ta || (ta = true, ca = ra, da = sa);
+            case 21: // draw line
+                lineX = msg.getInt16(offset, true);
+                offset += 2;
+                lineY = msg.getInt16(offset, true);
+                offset += 2;
+                if (!ta) {
+                    ta = true;
+                    ca = lineX;
+                    da = lineY;
+                }
                 break;
-            case 32:
-                G.push(msg.getUint32(c, true));
-                c += 4;
+            case 32: // add node
+                G.push(msg.getUint32(offset, true));
+                offset += 4;
                 break;
-            case 49:
-                if (null != y) break;
-                var d = msg.getUint32(c, true),
-                    c = c + 4;
+            case 48: // update leaderboard (custom text)
+                setCustomLB = true;
+                noRanking = true;
+            case 49: // update leaderboard (ffa)
+                if (!setCustomLB) {
+                    noRanking = false;
+                }
+                y = null;
+                var validElements = msg.getUint32(offset, true);
+                offset += 4;
                 leaderBoard = [];
-                for (var e = 0; e < d; ++e) {
-                    var m = msg.getUint32(c, true),
-                        c = c + 4;
+                for (var i = 0; i < validElements; ++i) {
+                    var nodeId = msg.getUint32(offset, true);
+                    offset += 4;
                     leaderBoard.push({
-                        id: m,
-                        name: b()
+                        id: nodeId,
+                        name: getString()
                     })
                 }
                 drawLeaderBoard();
                 break;
-            case 50:
+            case 50: // update leaderboard (teams)
                 y = [];
-                d = msg.getUint32(c, true);
-                c += 4;
-                for (e = 0; e < d; ++e) y.push(msg.getFloat32(c, true)), c += 4;
+                var validElements = msg.getUint32(offset, true);
+                offset += 4;
+                for (var i = 0; i < validElements; ++i) {
+                    y.push(msg.getFloat32(offset, true));
+                    offset += 4;
+                }
                 drawLeaderBoard();
                 break;
-            case 64:
-                ea = msg.getFloat64(c, true), c += 8, fa = msg.getFloat64(c, true), c += 8, ga = msg.getFloat64(c, true), c += 8, ha = msg.getFloat64(c, true), c += 8, Q = (ga + ea) / 2, R = (ha + fa) / 2, S = 1, 0 == n.length && (t = Q, u = R, viewZoom = S)
+            case 64: // set border
+                ea = msg.getFloat64(offset, true);
+                offset += 8;
+                fa = msg.getFloat64(offset, true)
+                ;
+                offset += 8;
+                ga = msg.getFloat64(offset, true);
+                offset += 8;
+                ha = msg.getFloat64(offset, true);
+                offset += 8;
+                posX = (ga + ea) / 2;
+                posY = (ha + fa) / 2;
+                posSize = 1;
+                if (0 == n.length) {
+                    t = posX;
+                    u = posY;
+                    viewZoom = posSize
+                }
+                break;
         }
     }
 
-    function ab(a, b) {
-        H = +new Date;
-        var c = Math.random();
+    function updateNodes(view, offset) {
+        timestamp = +new Date;
+        var code = Math.random();
         ua = false;
-        var d = a.getUint16(b, true);
-        b += 2;
-        for (var e = 0; e < d; ++e) {
-            var m = A[a.getUint32(b, true)],
-                h = A[a.getUint32(b + 4, true)];
-            b += 8;
-            m && h && (h.destory(), h.ox = h.x, h.oy = h.y, h.oSize = h.size, h.nx = m.x, h.ny = m.y, h.nSize = h.size, h.updateTime = H)
-        }
-        for (e = 0;;) {
-            d = a.getUint32(b, true);
-            b += 4;
-            if (0 == d) break;
-            ++e;
-            var g, m = a.getInt16(b, true);
-            b += 2;
-            h = a.getInt16(b, true);
-            b += 2;
-            g = a.getInt16(b, true);
-            b += 2;
-            for (var f = a.getUint8(b++), k = a.getUint8(b++), l = a.getUint8(b++),
-                    f = (f << 16 | k << 8 | l).toString(16); 6 > f.length;) f = "0" + f;
-            var f = "#" + f,
-                k = a.getUint8(b++),
-                l = !! (k & 1),
-                r = !! (k & 16);
-            k & 2 && (b += 4);
-            k & 4 && (b += 8);
-            k & 8 && (b += 16);
-            for (var q, p = "";;) {
-                q = a.getUint16(b, true);
-                b += 2;
-                if (0 == q) break;
-                p += String.fromCharCode(q)
+        var queueLength = view.getUint16(offset, true);
+        offset += 2;
+        for (var i = 0; i < queueLength; ++i) {
+            var killer = A[view.getUint32(offset, true)],
+                killedNode = A[view.getUint32(offset + 4, true)];
+            offset += 8;
+            if (killer && killedNode) {
+                killedNode.destroy();
+                killedNode.ox = killedNode.x;
+                killedNode.oy = killedNode.y;
+                killedNode.oSize = killedNode.size;
+                killedNode.nx = killer.x;
+                killedNode.ny = killer.y;
+                killedNode.nSize = killedNode.size;
+                killedNode.updateTime = timestamp;
             }
-            q = p;
-            p = null;
-            A.hasOwnProperty(d) ? (p = A[d], p.updatePos(), p.ox = p.x, p.oy = p.y, p.oSize = p.size, p.color = f) : (p = new Cell(d, m, h, g, f, q), nodelist.push(p), A[d] = p, p.ka = m, p.la = h);
-            p.isVirus = l;
-            p.isAgitated = r;
-            p.nx = m;
-            p.ny = h;
-            p.nSize = g;
-            p.updateCode = c;
-            p.updateTime = H;
-            p.nnn = k;
-            q && p.setName(q); - 1 != G.indexOf(d) && -1 == n.indexOf(p) && (document.getElementById("overlays").style.display = "none", n.push(p), 1 == n.length && (t = p.x, u = p.y))
         }
-        c = a.getUint32(b, true);
-        b += 4;
-        for (e = 0; e < c; e++) d = a.getUint32(b, true), b += 4, p = A[d], null != p && p.destory();
+        var nodeId = 0;
+        var i = 0;
+        while (nodeId = view.getUint32(offset, true) != 0) {
+            offset += 4;
+            ++i;
+            var mass, posY, posX = view.getInt16(offset, true);
+            offset += 2;
+            posY = view.getInt16(offset, true);
+            offset += 2;
+            mass = view.getInt16(offset, true);
+            offset += 2;
+            var r = view.getUint8(offset++),
+                g = view.getUint8(offset++),
+                b = view.getUint8(offset++),
+                color = (r << 16 | g << 8 | b).toString(16);
+            while (6 > color.length) {
+                color = '0' + color;
+            }
+            color = '#' + color;
+            var flags = view.getUint8(offset++),
+                flagVirus = !!(flags & 1),
+                flagAgitated = !!(flags & 16);
+            if ((flags & 2) > 0) {
+                offset += 4;
+            }
+            if ((flags & 4) > 0) {
+                offset += 8;
+            }
+            if ((flags & 8) > 0) {
+                offset += 16;
+            }
+            var char, name = '';
+            while (char = view.getUint16(offset, true) != 0) {
+                offset += 2;
+                name += String.fromCharCode(char)
+            }
+            offset += 2;
+            var node = null;
+            if (A.hasOwnProperty(nodeId)) {
+                node = A[nodeId];
+                node.updatePos();
+                node.ox = node.x;
+                node.oy = node.y;
+                node.oSize = node.size;
+                node.color = color;
+            } else {
+                node = new Cell(nodeId, posX, posY, mass, color, name);
+                nodelist.push(node);
+                A[nodeId] = node;
+                node.ka = posX;
+                node.la = posY;
+            }
+            node.isVirus = flagVirus;
+            node.isAgitated = flagAgitated;
+            node.nx = posX;
+            node.ny = posY;
+            node.nSize = mass;
+            node.updateCode = code;
+            node.updateTime = timestamp;
+            node.nnn = flags;
+            name && node.setName(name);
+            if (-1 != G.indexOf(nodeId) && -1 == n.indexOf(node)) {
+                document.getElementById("overlays").style.display = "none";
+                n.push(node);
+                if (1 == n.length) {
+                    t = node.x;
+                    u = node.y;
+                }
+            }
+        }
+        offset += 4;
+        code = view.getUint32(offset, true);
+        offset += 4;
+        for (i = 0; i < code; i++) {
+            queueLength = view.getUint32(offset, true);
+            offset += 4;
+            name = A[queueLength];
+            null != name && name.destroy();
+        }
         ua && 0 == n.length && showOverlays(false)
     }
 
@@ -355,7 +516,16 @@
         if (wsIsOpen()) {
             msg = rawMouseX - canvasWidth / 2;
             var b = rawMouseY - canvasHeight / 2;
-            64 > msg * msg + b * b || .01 > Math.abs(Ma - X) && .01 > Math.abs(Na - Y) || (Ma = X, Na = Y, msg = prepareData(21), msg.setUint8(0, 16), msg.setFloat64(1, X, true), msg.setFloat64(9, Y, true), msg.setUint32(17, 0, true), wsSend(msg))
+            if (64 <= msg * msg + b * b && !(.01 > Math.abs(Ma - X) && .01 > Math.abs(Na - Y))) {
+                Ma = X;
+                Na = Y;
+                msg = prepareData(21);
+                msg.setUint8(0, 16);
+                msg.setFloat64(1, X, true);
+                msg.setFloat64(9, Y, true);
+                msg.setUint32(17, 0, true);
+                wsSend(msg);
+            }
         }
     }
 
@@ -395,7 +565,7 @@
 
     function viewRange() {
         var a;
-        a = 1 * Math.max(canvasHeight / 1080, canvasWidth / 1920);
+        a = Math.max(canvasHeight / 1080, canvasWidth / 1920);
         return a *= zoom
     }
 
@@ -410,22 +580,44 @@
     function drawGameScene() {
         var a, b = Date.now();
         ++cb;
-        H = b;
+        timestamp = b;
         if (0 < n.length) {
             bb();
-            for (var c =
-                a = 0, d = 0; d < n.length; d++) n[d].updatePos(), a += n[d].x / n.length, c += n[d].y / n.length;
-            Q = a;
-            R = c;
-            S = viewZoom;
+            var c = a = 0;
+            for (var d = 0; d < n.length; d++) {
+                n[d].updatePos();
+                a += n[d].x / n.length;
+                c += n[d].y / n.length;
+            }
+            posX = a;
+            posY = c;
+            posSize = viewZoom;
             t = (t + a) / 2;
             u = (u + c) / 2
-        } else t = (29 * t + Q) / 30, u = (29 * u + R) / 30, viewZoom = (9 * viewZoom + S * viewRange()) / 10;
+        } else {
+            t = (29 * t + posX) / 30;
+            u = (29 * u + posY) / 30;
+            viewZoom = (9 * viewZoom + posSize * viewRange()) / 10;
+        }
         buildQTree();
         mouseCoordinateChange();
         xa || ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        xa ? (ctx.fillStyle = showDarkTheme ? "#111111" : "#F2FBFF", ctx.globalAlpha = .05, ctx.fillRect(0, 0, canvasWidth, canvasHeight), ctx.globalAlpha = 1) : drawGrid();
-        nodelist.sort(function(a, b) {
+        if (xa) {
+            if (showDarkTheme) {
+                ctx.fillStyle = '#111111';
+                ctx.globalAlpha = .05;
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                ctx.globalAlpha = 1;
+            } else {
+                ctx.fillStyle = '#F2FBFF';
+                ctx.globalAlpha = .05;
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                ctx.globalAlpha = 1;
+            }
+        } else {
+            drawGrid();
+        }
+        nodelist.sort(function (a, b) {
             return a.size == b.size ? a.id - b.id : a.size - b.size
         });
         ctx.save();
@@ -437,9 +629,9 @@
         for (d = 0; d < nodelist.length; d++) nodelist[d].drawOneCell(ctx);
         //console.log(Cells.length);
         if (ta) {
-            ca = (3 * ca + ra) /
+            ca = (3 * ca + lineX) /
                 4;
-            da = (3 * da + sa) / 4;
+            da = (3 * da + lineY) / 4;
             ctx.save();
             ctx.strokeStyle = "#FFAAAA";
             ctx.lineWidth = 10;
@@ -447,17 +639,33 @@
             ctx.lineJoin = "round";
             ctx.globalAlpha = .5;
             ctx.beginPath();
-            for (d = 0; d < n.length; d++) ctx.moveTo(n[d].x, n[d].y), ctx.lineTo(ca, da);
+            for (d = 0; d < n.length; d++) {
+                ctx.moveTo(n[d].x, n[d].y);
+                ctx.lineTo(ca, da);
+            }
             ctx.stroke();
             ctx.restore()
         }
         ctx.restore();
         Canvas && Canvas.width && ctx.drawImage(Canvas, canvasWidth - Canvas.width - 10, 10);
         J = Math.max(J, eb());
-        0 != J && (null == ja && (ja = new ka(24, "#FFFFFF")), ja.setValue("Score: " + ~~(J / 100)), c = ja.render(), a = c.width, ctx.globalAlpha = .2, ctx.fillStyle = "#000000", ctx.fillRect(10, canvasHeight - 10 - 24 - 10, a + 10, 34), ctx.globalAlpha = 1, ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5));
+        if (0 != J) {
+            if (null == ja) {
+                ja = new ka(24, '#FFFFFF');
+            }
+            ja.setValue('Score: ' + ~~(J / 100));
+            c = ja.render();
+            a = c.width;
+            ctx.globalAlpha = .2;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(10, canvasHeight - 10 - 24 - 10, a + 10, 34);
+            ctx.globalAlpha = 1;
+            ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5);
+        }
         drawSplitIcon();
         b = Date.now() - b;
-        b > 1E3 / 60 ? z -= .01 : b < 1E3 / 65 && (z += .01);.4 > z && (z = .4);
+        b > 1E3 / 60 ? z -= .01 : b < 1E3 / 65 && (z += .01);
+        .4 > z && (z = .4);
         1 < z && (z = 1)
     }
 
@@ -468,8 +676,20 @@
         ctx.strokeStyle = showDarkTheme ? "#AAAAAA" : "#000000";
         ctx.globalAlpha = .2;
         ctx.scale(viewZoom, viewZoom);
-        for (var a = canvasWidth / viewZoom, b = canvasHeight / viewZoom, c = -.5 + (-t + a / 2) % 50; c < a; c += 50) ctx.beginPath(), ctx.moveTo(c, 0), ctx.lineTo(c, b), ctx.stroke();
-        for (c = -.5 + (-u + b / 2) % 50; c < b; c += 50) ctx.beginPath(), ctx.moveTo(0, c), ctx.lineTo(a, c), ctx.stroke();
+        var a = canvasWidth / viewZoom,
+            b = canvasHeight / viewZoom;
+        for (var c = -.5 + (-t + a / 2) % 50; c < a; c += 50) {
+            ctx.beginPath();
+            ctx.moveTo(c, 0);
+            ctx.lineTo(c, b);
+            ctx.stroke();
+        }
+        for (c = -.5 + (-u + b / 2) % 50; c < b; c += 50) {
+            ctx.beginPath();
+            ctx.moveTo(0, c);
+            ctx.lineTo(a, c);
+            ctx.stroke();
+        }
         ctx.restore()
     }
 
@@ -506,10 +726,29 @@
                 c = "Leaderboard";
                 ctx.font = "30px Ubuntu";
                 ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 40);
-                if (null == y)
-                    for (ctx.font = "20px Ubuntu", b = 0; b < leaderBoard.length; ++b) c =
-                        leaderBoard[b].name || "An unnamed cell", showName || (c = "An unnamed cell"), -1 != G.indexOf(leaderBoard[b].id) ? (n[0].name && (c = n[0].name), ctx.fillStyle = "#FFAAAA") : ctx.fillStyle = "#FFFFFF", c = b + 1 + ". " + c, ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 70 + 24 * b);
-                else
+                if (null == y) {
+                    for (ctx.font = "20px Ubuntu", b = 0; b < leaderBoard.length; ++b) {
+                        c = leaderBoard[b].name || "An unnamed cell";
+                        if (!showName) {
+                            (c = "An unnamed cell");
+                        }
+                        if (-1 != G.indexOf(leaderBoard[b].id)) {
+                            n[0].name && (c = n[0].name);
+                            ctx.fillStyle = "#FFAAAA";
+                            if (!noRanking) {
+                                c = b + 1 + ". " + c;
+                            }
+                            ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 70 + 24 * b);
+                        } else {
+                            ctx.fillStyle = "#FFFFFF";
+                            if (!noRanking) {
+                                c = b + 1 + ". " + c;
+                            }
+                            ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 70 + 24 * b);
+                        }
+                    }
+                }
+                else {
                     for (b = c = 0; b < y.length; ++b) {
                         var d = c + y[b] * Math.PI * 2;
                         ctx.fillStyle = teamColor[b + 1];
@@ -519,6 +758,7 @@
                         ctx.fill();
                         c = d
                     }
+                }
             }
     }
 
@@ -537,7 +777,7 @@
     function ka(usize, ucolor, ustroke, ustrokecolor) {
         usize && (this._size = usize);
         ucolor && (this._color = ucolor);
-        this._stroke = !! ustroke;
+        this._stroke = !!ustroke;
         ustrokecolor && (this._strokeColor = ustrokecolor)
     }
 
@@ -560,7 +800,7 @@
             X = -1,
             Y = -1,
             cb = 0,
-            H = 0,
+            timestamp = 0,
             F = null,
             ea = 0,
             fa = 0,
@@ -575,15 +815,15 @@
             J = 0,
             showDarkTheme = false,
             showMass = false,
-            Q = t = ~~ ((ea + ga) / 2),
-            R = u = ~~ ((fa + ha) / 2),
-            S = 1,
+            posX = t = ~~((ea + ga) / 2),
+            posY = u = ~~((fa + ha) / 2),
+            posSize = 1,
             N = "",
             y = null,
             ma = false,
             ta = false,
-            ra = 0,
-            sa = 0,
+            lineX = 0,
+            lineY = 0,
             ca = 0,
             da = 0,
             Ra = 0,
@@ -591,97 +831,109 @@
             xa = false,
             zoom = 1,
             isTouchStart = "ontouchstart" in wHandle && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-            splitIcon = new Image;
+            splitIcon = new Image,
+            noRanking = false;
         splitIcon.src = "http://agar.io/img/split.png";
         var Sa = document.createElement("canvas");
         if ("undefined" == typeof console || "undefined" == typeof DataView || "undefined" == typeof WebSocket || null == Sa || null == Sa.getContext || null == wHandle.localStorage) alert("You browser does not support this game, we recommend you to use Firefox to play this");
         else {
             var $ = null;
-            wHandle.setNick = function(arg) {
+            wHandle.setNick = function (arg) {
                 hideOverlays();
                 F = arg;
                 Ka();
                 J = 0
             };
-            wHandle.setRegion = W;
-            wHandle.setSkins = function(arg) {
+            wHandle.setRegion = setRegion;
+            wHandle.setSkins = function (arg) {
                 showSkin = arg
             };
-            wHandle.setNames = function(arg) {
+            wHandle.setNames = function (arg) {
                 showName = arg
             };
-            wHandle.setDarkTheme = function(arg) {
+            wHandle.setDarkTheme = function (arg) {
                 showDarkTheme = arg
             };
-            wHandle.setColors = function(arg) {
+            wHandle.setColors = function (arg) {
                 showColor = arg
             };
-            wHandle.setShowMass = function(arg) {
+            wHandle.setShowMass = function (arg) {
                 showMass = arg
             };
-            wHandle.spectate = function() {
+            wHandle.spectate = function () {
                 F = null;
                 sendUint8(1);
                 hideOverlays()
             };
-            wHandle.setGameMode = function(arg) {
-                arg != N && (N = arg, showConnecting())
+            wHandle.setGameMode = function (arg) {
+                if (arg != N) {
+                    N = arg;
+                    showConnecting();
+                }
             };
-            wHandle.setAcid = function(arg) {
+            wHandle.setAcid = function (arg) {
                 xa = arg
             };
-            null != wHandle.localStorage && (null == wHandle.localStorage.AB8 && (wHandle.localStorage.AB8 = 0 + ~~(100 * Math.random())), Ra = +wHandle.localStorage.AB8, wHandle.ABGroup = Ra);
-            wjQuery.get(localProtocol + "//gc.agar.io", function(a) {
+            if (null != wHandle.localStorage) {
+                if (null == wHandle.localStorage.AB8) {
+                    wHandle.localStorage.AB8 = ~~(100 * Math.random());
+                }
+                Ra = +wHandle.localStorage.AB8;
+                wHandle.ABGroup = Ra;
+            }
+            wjQuery.get(localProtocol + "//gc.agar.io", function (a) {
                 var b = a.split(" ");
                 a = b[0];
-                b = b[1] || ""; - 1 == "DE IL PL HU BR AT UA".split(" ").indexOf(a) && knownNameDict.push("nazi"); - 1 == ["UA"].indexOf(a) && knownNameDict.push("ussr");
-                T.hasOwnProperty(a) && ("string" == typeof T[a] ? w || W(T[a]) : T[a].hasOwnProperty(b) && (w || W(T[a][b])))
+                b = b[1] || "";
+                -1 == "DE IL PL HU BR AT UA".split(" ").indexOf(a) && knownNameDict.push("nazi");
+                -1 == ["UA"].indexOf(a) && knownNameDict.push("ussr");
+                T.hasOwnProperty(a) && ("string" == typeof T[a] ? w || setRegion(T[a]) : T[a].hasOwnProperty(b) && (w || setRegion(T[a][b])))
             }, "text");
-            setTimeout(function() {}, 3E5);
+            setTimeout(function () {
+            }, 3E5);
             var T = {
                 ZW: "EU-London"
             };
             wHandle.connect = wsConnect;
 
             //This part is for loading custon skins
-            var data = {"action":"test"};
+            var data = {"action": "test"};
             var response = null;
             wjQuery.ajax({
                 type: "POST",
-                  dataType: "json",
-                  url: "checkdir.php", //Relative or absolute path to response.php file
-                  data: data,
-                  success: function(data) {
-                //alert(data["names"]);
-                response = JSON.parse(data["names"]);
-            }
+                dataType: "json",
+                url: "checkdir.php", //Relative or absolute path to response.php file
+                data: data,
+                success: function (data) {
+                    //alert(data["names"]);
+                    response = JSON.parse(data["names"]);
+                }
             });
 
 
-            var interval1Id = setInterval(function(){
+            var interval1Id = setInterval(function () {
                 //console.log("logging every 5 seconds");
                 //console.log(Aa);
 
-            wjQuery.ajax({
-                type: "POST",
-                  dataType: "json",
-                  url: "checkdir.php", //Relative or absolute path to response.php file
-                  data: data,
-                  success: function(data) {
-                //alert(data["names"]);
-                response = JSON.parse(data["names"]);
-            }
-            });
+                wjQuery.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: "checkdir.php", //Relative or absolute path to response.php file
+                    data: data,
+                    success: function (data) {
+                        //alert(data["names"]);
+                        response = JSON.parse(data["names"]);
+                    }
+                });
                 //console.log(response);
                 for (var i = 0; i < response.length; i++) {
                     //console.log(response[insert]);
-                if (-1 == knownNameDict.indexOf(response[i])) {
-                knownNameDict.push(response[i]);
-                //console.log("Add:"+response[i]);
+                    if (-1 == knownNameDict.indexOf(response[i])) {
+                        knownNameDict.push(response[i]);
+                        //console.log("Add:"+response[i]);
+                    }
                 }
-            }
-            },15000);
-
+            }, 15000);
 
 
             var delay = 500,
@@ -692,9 +944,9 @@
                 ja = null,
                 K = {},
                 knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
-		        hb = ["8", "nasa"],
+                hb = ["8", "nasa"],
                 ib = ["_canvas'blob"];
-                Cell.prototype = {
+            Cell.prototype = {
                 id: 0,
                 points: null,
                 pointsAcc: null,
@@ -718,7 +970,7 @@
                 isVirus: false,
                 isAgitated: false,
                 wasSimpleDrawing: true,
-                destory: function() {
+                destroy: function () {
                     var a;
                     for (a = 0; a < nodelist.length; a++)
                         if (nodelist[a] == this) {
@@ -726,31 +978,49 @@
                             break
                         }
                     delete A[this.id];
-                    a = n.indexOf(this); - 1 != a && (ua = true, n.splice(a, 1));
-                    a = G.indexOf(this.id); - 1 != a && G.splice(a, 1);
+                    a = n.indexOf(this);
+                    if (-1 != a) {
+                        ua = true;
+                        n.splice(a, 1);
+                    }
+                    a = G.indexOf(this.id);
+                    if (-1 != a) {
+                        G.splice(a, 1);
+                    }
                     this.destroyed = true;
                     Cells.push(this)
                 },
-                getNameSize: function() {
+                getNameSize: function () {
                     return Math.max(~~(.3 * this.size), 24)
                 },
-                setName: function(a) {
-                    if (this.name = a) null == this.nameCache ? this.nameCache = new ka(this.getNameSize(), "#FFFFFF", true, "#000000") : this.nameCache.setSize(this.getNameSize()), this.nameCache.setValue(this.name)
+                setName: function (a) {
+                    if (this.name = a) {
+                        if (null == this.nameCache) {
+                            this.nameCache = new ka(this.getNameSize(), "#FFFFFF", true, "#000000");
+                            this.nameCache.setValue(this.name);
+                        } else {
+                            this.nameCache.setSize(this.getNameSize());
+                            this.nameCache.setValue(this.name);
+                        }
+                    }
                 },
-                createPoints: function() {
+                createPoints: function () {
                     for (var a = this.getNumPoints(); this.points.length > a;) {
-                        var b = ~~ (Math.random() * this.points.length);
+                        var b = ~~(Math.random() * this.points.length);
                         this.points.splice(b, 1);
                         this.pointsAcc.splice(b, 1)
                     }
-                    0 == this.points.length && 0 < a && (this.points.push({
-                        S: this,
-                        e: this.size,
-                        x: this.x,
-                        y: this.y
-                    }), this.pointsAcc.push(Math.random() - .5));
-                    for (; this.points.length < a;) {
-                        var b = ~~ (Math.random() * this.points.length),
+                    if (0 == this.points.length && 0 < a) {
+                        this.points.push({
+                            S: this,
+                            e: this.size,
+                            x: this.x,
+                            y: this.y
+                        });
+                        this.pointsAcc.push(Math.random() - .5);
+                    }
+                    while (this.points.length < a) {
+                        var b = ~~(Math.random() * this.points.length),
                             c = this.points[b];
                         this.points.splice(b, 0, {
                             S: this,
@@ -761,7 +1031,7 @@
                         this.pointsAcc.splice(b, 0, this.pointsAcc[b])
                     }
                 },
-                getNumPoints: function() {
+                getNumPoints: function () {
                     if (0 == this.id) return 16;
                     var a = 10;
                     20 > this.size && (a = 0);
@@ -770,19 +1040,20 @@
                     this.isVirus || (b *= viewZoom);
                     b *= z;
                     this.nnn & 32 && (b *= .25);
-                    return~~ Math.max(b, a)
+                    return ~~Math.max(b, a)
                 },
-                movePoints: function() {
+                movePoints: function () {
                     this.createPoints();
                     for (var a = this.points, b = this.pointsAcc, c = a.length, d = 0; d < c; ++d) {
                         var e = b[(d - 1 + c) % c],
                             m = b[(d + 1) % c];
                         b[d] += (Math.random() - .5) * (this.isAgitated ? 3 : 1);
                         b[d] *= .7;
-                        10 < b[d] && (b[d] = 10); - 10 > b[d] && (b[d] = -10);
+                        10 < b[d] && (b[d] = 10);
+                        -10 > b[d] && (b[d] = -10);
                         b[d] = (e + m + 8 * b[d]) / 10
                     }
-                    for (var h = this, g = this.isVirus ? 0 : (this.id / 1E3 + H / 1E4) % (2 * Math.PI), d = 0; d < c; ++d) {
+                    for (var h = this, g = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), d = 0; d < c; ++d) {
                         var f = a[d].e,
                             e = a[(d - 1 + c) % c].e,
                             m = a[(d + 1) % c].e;
@@ -790,12 +1061,20 @@
                             var l = false,
                                 n = a[d].x,
                                 q = a[d].y;
-                            qTree.retrieve2(n -
-                                5, q - 5, 10, 10, function(a) {
-                                    a.S != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y) && (l = true)
-                                });
-                            !l && (a[d].x < ea || a[d].y < fa || a[d].x > ga || a[d].y > ha) && (l = true);
-                            l && (0 < b[d] && (b[d] = 0), b[d] -= 1)
+                            qTree.retrieve2(n - 5, q - 5, 10, 10, function (a) {
+                                if (a.S != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
+                                    l = true;
+                                }
+                            });
+                            if (!l && a[d].x < ea || a[d].y < fa || a[d].x > ga || a[d].y > ha) {
+                                l = true;
+                            }
+                            if (l) {
+                                if (0 < b[d]) {
+                                    (b[d] = 0);
+                                }
+                                b[d] -= 1;
+                            }
                         }
                         f += b[d];
                         0 > f && (f = 0);
@@ -808,25 +1087,30 @@
                         a[d].y = this.y + Math.sin(e * d + g) * m
                     }
                 },
-                updatePos: function() {
+                updatePos: function () {
                     if (0 == this.id) return 1;
                     var a;
-                    a = (H - this.updateTime) / 120;
+                    a = (timestamp - this.updateTime) / 120;
                     a = 0 > a ? 0 : 1 < a ? 1 : a;
                     var b = 0 > a ? 0 : 1 < a ? 1 : a;
                     this.getNameSize();
                     if (this.destroyed && 1 <= b) {
-                        var c = Cells.indexOf(this); - 1 != c && Cells.splice(c, 1)
+                        var c = Cells.indexOf(this);
+                        -1 != c && Cells.splice(c, 1)
                     }
                     this.x = a * (this.nx - this.ox) + this.ox;
                     this.y = a * (this.ny - this.oy) + this.oy;
                     this.size = b * (this.nSize - this.oSize) + this.oSize;
                     return b
                 },
-                shouldRender: function() {
-                    return 0 == this.id ? true : this.x + this.size + 40 < t - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < u - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > t + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > u + canvasHeight / 2 / viewZoom ? false : true
+                shouldRender: function () {
+                    if (0 == this.id) {
+                        return true
+                    } else {
+                        return this.x + this.size + 40 < t - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < u - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > t + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > u + canvasHeight / 2 / viewZoom ? false : true
+                    }
                 },
-                drawOneCell: function(a) {
+                drawOneCell: function (a) {
                     if (this.shouldRender()) {
                         var b = 0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom;
                         5 > this.getNumPoints() && (b = true);
@@ -834,14 +1118,23 @@
                             for (var c = 0; c < this.points.length; c++) this.points[c].e = this.size;
                         this.wasSimpleDrawing = b;
                         a.save();
-                        this.drawTime = H;
+                        this.drawTime = timestamp;
                         c = this.updatePos();
                         this.destroyed && (a.globalAlpha *= 1 - c);
                         a.lineWidth = 10;
                         a.lineCap = "round";
                         a.lineJoin = this.isVirus ? "miter" : "round";
-                        showColor ? (a.fillStyle = "#FFFFFF", a.strokeStyle = "#AAAAAA") : (a.fillStyle = this.color, a.strokeStyle = this.color);
-                        if (b) a.beginPath(), a.arc(this.x, this.y, this.size, 0, 2 * Math.PI, false);
+                        if (showColor) {
+                            a.fillStyle = "#FFFFFF";
+                            a.strokeStyle = "#AAAAAA";
+                        } else {
+                            a.fillStyle = this.color;
+                            a.strokeStyle = this.color;
+                        }
+                        if (b) {
+                            a.beginPath();
+                            a.arc(this.x, this.y, this.size, 0, 2 * Math.PI, false);
+                        }
                         else {
                             this.movePoints();
                             a.beginPath();
@@ -854,14 +1147,41 @@
                         }
                         a.closePath();
                         d = this.name.toLowerCase();
-                        !this.isAgitated && showSkin && ":teams" != N ? -1 != knownNameDict.indexOf(d) ? (K.hasOwnProperty(d) || (K[d] = new Image, K[d].src = SKIN_URL + d + ".png"), c = 0 != K[d].width && K[d].complete ? K[d] : null) : c = null : c = null;
+                        if (!this.isAgitated && showSkin && ':teams' != N) {
+                            if (-1 != knownNameDict.indexOf(d)) {
+                                if (!K.hasOwnProperty(d)) {
+                                    K[d] = new Image;
+                                    K[d].src = SKIN_URL + d + '.png';
+                                }
+                                if (0 != K[d].width && K[d].complete) {
+                                    c = K[d];
+                                } else {
+                                    c = null;
+                                }
+                            } else {
+                                c = null;
+                            }
+                        } else {
+                            c = null;
+                        }
                         c = (e = c) ? -1 != ib.indexOf(d) : false;
                         b || a.stroke();
                         a.fill();
-                        null == e || c || (a.save(), a.clip(), a.drawImage(e, this.x - this.size, this.y - this.size, 2 * this.size, 2 * this.size), a.restore());
-                        (showColor || 15 < this.size) && !b && (a.strokeStyle = "#000000", a.globalAlpha *= .1, a.stroke());
+                        if (!(null == e || c)) {
+                            a.save();
+                            a.clip();
+                            a.drawImage(e, this.x - this.size, this.y - this.size, 2 * this.size, 2 * this.size);
+                            a.restore();
+                        }
+                        if ((showColor || 15 < this.size) && !b) {
+                            a.strokeStyle = '#000000';
+                            a.globalAlpha *= .1;
+                            a.stroke();
+                        }
                         a.globalAlpha = 1;
-                        null != e && c && a.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
+                        if (null != e && c) {
+                            a.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
+                        }
                         c = -1 != n.indexOf(this);
                         if (0 != this.id) {
                             b = ~~this.y;
@@ -872,12 +1192,25 @@
                                 d = Math.ceil(10 * viewZoom) / 10;
                                 e.setScale(d);
                                 var e = e.render(),
-                                    m = ~~ (e.width / d),
-                                    h = ~~ (e.height / d);
+                                    m = ~~(e.width / d),
+                                    h = ~~(e.height / d);
                                 a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                                 b += e.height / 2 / d + 4
                             }
-                            showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size) && (null == this.sizeCache && (this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")), c = this.sizeCache, c.setSize(this.getNameSize() / 2), c.setValue(~~(this.size * this.size / 100)), d = Math.ceil(10 * viewZoom) / 10, c.setScale(d), e = c.render(), m = ~~ (e.width / d), h = ~~ (e.height / d), a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h))
+                            if (showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
+                                if (null == this.sizeCache) {
+                                    this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
+                                }
+                                c = this.sizeCache;
+                                c.setSize(this.getNameSize() / 2);
+                                c.setValue(~~(this.size * this.size / 100));
+                                d = Math.ceil(10 * viewZoom) / 10;
+                                c.setScale(d);
+                                e = c.render();
+                                m = ~~(e.width / d);
+                                h = ~~(e.height / d);
+                                a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
+                            }
                         }
                         a.restore()
                     }
@@ -893,20 +1226,35 @@
                 _ctx: null,
                 _dirty: false,
                 _scale: 1,
-                setSize: function(a) {
-                    this._size != a && (this._size = a, this._dirty = true)
+                setSize: function (a) {
+                    if (this._size != a) {
+                        this._size = a;
+                        this._dirty = true;
+                    }
                 },
-                setScale: function(a) {
-                    this._scale != a && (this._scale = a, this._dirty = true)
+                setScale: function (a) {
+                    if (this._scale != a) {
+                        this._scale = a;
+                        this._dirty = true;
+                    }
                 },
-                setStrokeColor: function(a) {
-                    this._strokeColor != a && (this._strokeColor = a, this._dirty = true)
+                setStrokeColor: function (a) {
+                    if (this._strokeColor != a) {
+                        this._strokeColor = a;
+                        this._dirty = true;
+                    }
                 },
-                setValue: function(a) {
-                    a != this._value && (this._value = a, this._dirty = true)
+                setValue: function (a) {
+                    if (a != this._value) {
+                        this._value = a;
+                        this._dirty = true;
+                    }
                 },
-                render: function() {
-                    null == this._canvas && (this._canvas = document.createElement("canvas"), this._ctx = this._canvas.getContext("2d"));
+                render: function () {
+                    if (null == this._canvas) {
+                        this._canvas = document.createElement("canvas");
+                        this._ctx = this._canvas.getContext("2d");
+                    }
                     if (this._dirty) {
                         this._dirty = false;
                         var a = this._canvas,
@@ -914,9 +1262,9 @@
                             c = this._value,
                             d = this._scale,
                             e = this._size,
-                            m = e + "px Ubuntu";
+                            m = e + 'px Ubuntu';
                         b.font = m;
-                        var h = ~~ (.2 * e);
+                        var h = ~~(.2 * e);
                         a.width = (b.measureText(c).width +
                             6) * d;
                         a.height = (e + h) * d;
@@ -932,11 +1280,11 @@
                     return this._canvas
                 }
             };
-            Date.now || (Date.now = function() {
+            Date.now || (Date.now = function () {
                 return (new Date).getTime()
             });
             var Quad = {
-                init: function(args) {
+                init: function (args) {
                     function Node(x, y, w, h, depth) {
                         this.x = x;
                         this.y = y;
@@ -946,6 +1294,7 @@
                         this.items = [];
                         this.nodes = []
                     }
+
                     var c = args.maxChildren || 2,
                         d = args.maxDepth || 4;
                     Node.prototype = {
@@ -956,38 +1305,47 @@
                         depth: 0,
                         items: null,
                         nodes: null,
-                        exists: function(selector) {
+                        exists: function (selector) {
                             for (var i = 0; i < this.items.length; ++i) {
                                 var item = this.items[i];
                                 if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.f && item.y < selector.y + selector.getNameSize) return true
                             }
                             if (0 != this.nodes.length) {
                                 var self = this;
-                                return this.findOverlappingNodes(selector, function(dir) {
+                                return this.findOverlappingNodes(selector, function (dir) {
                                     return self.nodes[dir].exists(selector)
                                 })
                             }
                             return false;
                         },
-                        retrieve: function(item, callback) {
+                        retrieve: function (item, callback) {
                             for (var i = 0; i < this.items.length; ++i) callback(this.items[i]);
                             if (0 != this.nodes.length) {
                                 var self = this;
-                                this.findOverlappingNodes(item, function(dir) {
+                                this.findOverlappingNodes(item, function (dir) {
                                     self.nodes[dir].retrieve(item, callback)
                                 })
                             }
                         },
-                        insert: function(a) {
-                            0 != this.nodes.length ? this.nodes[this.findInsertNode(a)].insert(a) : this.items.length >= c && this.depth < d ? (this.devide(), this.nodes[this.findInsertNode(a)].insert(a)) : this.items.push(a)
+                        insert: function (a) {
+                            if (0 != this.nodes.length) {
+                                this.nodes[this.findInsertNode(a)].insert(a);
+                            } else {
+                                if (this.items.length >= c && this.depth < d) {
+                                    this.devide();
+                                    this.nodes[this.findInsertNode(a)].insert(a);
+                                } else {
+                                    this.items.push(a);
+                                }
+                            }
                         },
-                        findInsertNode: function(a) {
+                        findInsertNode: function (a) {
                             return a.x < this.x + this.f / 2 ? a.y < this.y + this.h / 2 ? 0 : 2 : a.y < this.y + this.h / 2 ? 1 : 3
                         },
-                        findOverlappingNodes: function(a, b) {
+                        findOverlappingNodes: function (a, b) {
                             return a.x < this.x + this.f / 2 && (a.y < this.y + this.h / 2 && b(0) || a.y >= this.y + this.h / 2 && b(2)) || a.x >= this.x + this.f / 2 && (a.y < this.y + this.h / 2 && b(1) || a.y >= this.y + this.h / 2 && b(3)) ? true : false
                         },
-                        devide: function() {
+                        devide: function () {
                             var a = this.depth + 1,
                                 c = this.f / 2,
                                 d = this.h / 2;
@@ -999,7 +1357,7 @@
                             this.items = [];
                             for (c = 0; c < a.length; c++) this.insert(a[c])
                         },
-                        clear: function() {
+                        clear: function () {
                             for (var a = 0; a < this.nodes.length; a++) this.nodes[a].clear();
                             this.items.length = 0;
                             this.nodes.length = 0
@@ -1013,31 +1371,34 @@
                     };
                     return {
                         root: new Node(args.minX, args.minY, args.maxX - args.minX, args.maxY - args.minY, 0),
-                        insert: function(a) {
+                        insert: function (a) {
                             this.root.insert(a)
                         },
-                        retrieve: function(a, b) {
+                        retrieve: function (a, b) {
                             this.root.retrieve(a, b)
                         },
-                        retrieve2: function(a, b, c, d, callback) {
+                        retrieve2: function (a, b, c, d, callback) {
                             internalSelector.x = a;
                             internalSelector.y = b;
                             internalSelector.f = c;
                             internalSelector.getNameSize = d;
                             this.root.retrieve(internalSelector, callback)
                         },
-                        exists: function(a) {
+                        exists: function (a) {
                             return this.root.exists(a)
                         },
-                        clear: function() {
+                        clear: function () {
                             this.root.clear()
                         }
                     }
                 }
             };
-            wjQuery(function() {
+            wjQuery(function () {
                 function renderFavicon() {
-                    0 < n.length && (redCell.color = n[0].color, redCell.setName(n[0].name));
+                    if (0 < n.length) {
+                        redCell.color = n[0].color;
+                        redCell.setName(n[0].name);
+                    }
                     ctx.clearRect(0, 0, 32, 32);
                     ctx.save();
                     ctx.translate(16, 16);
@@ -1049,6 +1410,7 @@
                     oldfavicon.setAttribute("href", Canvas.toDataURL("image/png"));
                     favicon.parentNode.replaceChild(oldfavicon, favicon)
                 }
+
                 var redCell = new Cell(0, 0, 0, 32, "#ED1C24", ""),
                     Canvas = document.createElement("canvas");
                 Canvas.width = 32;
