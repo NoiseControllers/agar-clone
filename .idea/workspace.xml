@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b233dd00-1c4d-44a4-87d1-36b6ee8b4003" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_out.js" afterPath="$PROJECT_DIR$/main_out.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="agar-clone.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -27,7 +26,7 @@
       <file leaf-file-name="info.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/info.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
+            <state vertical-scroll-proportion="-0.0">
               <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
@@ -47,7 +46,7 @@
       <file leaf-file-name="index.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/index.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
+            <state vertical-scroll-proportion="-0.0">
               <caret line="83" column="48" selection-start-line="83" selection-start-column="48" selection-end-line="83" selection-end-column="48" />
               <folding>
                 <element signature="n#style#0;n#div#3;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -59,8 +58,8 @@
       <file leaf-file-name="main_out.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main_out.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="1.0650407">
-              <caret line="1256" column="25" selection-start-line="1256" selection-start-column="24" selection-end-line="1256" selection-end-column="25" />
+            <state vertical-scroll-proportion="0.18699187">
+              <caret line="1254" column="43" selection-start-line="1254" selection-start-column="43" selection-end-line="1254" selection-end-column="43" />
               <folding />
             </state>
           </provider>
@@ -438,8 +437,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/main_out.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="1.0650407">
-          <caret line="1256" column="25" selection-start-line="1256" selection-start-column="24" selection-end-line="1256" selection-end-column="25" />
+        <state vertical-scroll-proportion="0.18699187">
+          <caret line="1254" column="43" selection-start-line="1254" selection-start-column="43" selection-end-line="1254" selection-end-column="43" />
           <folding />
         </state>
       </provider>
