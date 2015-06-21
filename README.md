@@ -35,5 +35,12 @@ This client has been tested on LEMP stack on OS X 10.10 and Ubuntu 14.04 with se
 
 It is known that some of the variables and function names still make no sense, we are working on that. 
 
+## Protocol extensions
+As the server has to tell whether the client supports protocol extensions, the values of package 254 and 255 have been adjusted.
+Package 255 now contains "Ogar" in ASCII (1332175218) while package 254 contains the version number. When modifying the protocol,
+only new features can be implemented. Also, the client must remain compatible with older versions of the server.
+
+Changes to the protocol have to be [documented](PROTOCOL.md).
+
 ## Contribution
 Pull Request are welcome. 

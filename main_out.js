@@ -290,11 +290,11 @@
         console.log("socket open");
         msg = prepareData(5);
         msg.setUint8(0, 254);
-        msg.setUint32(1, 4, true);
+        msg.setUint32(1, 1, true);
         wsSend(msg);
         msg = prepareData(5);
         msg.setUint8(0, 255);
-        msg.setUint32(1, 673720361, true);
+        msg.setUint32(1, 1332175218, true);
         wsSend(msg);
         sendNickName()
     }
