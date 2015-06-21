@@ -49,15 +49,46 @@
             qPressed = false,
             wPressed = false;
         wHandle.onkeydown = function (event) {
-            32 != event.keyCode || spacePressed || (sendMouseMove(), sendUint8(17), spacePressed = true);//split
-            81 != event.keyCode || qPressed || (sendUint8(18), qPressed = true);//key q pressed
-            87 != event.keyCode || wPressed || (sendMouseMove(), sendUint8(21), wPressed = true);//eject mass
-            27 == event.keyCode && showOverlays(true)
+            switch (event.keyCode) {
+                case 32: // split
+                    if (!spacePressed) {
+                        sendMouseMove();
+                        sendUint8(17);
+                        spacePressed = true;
+                    }
+                    break;
+                case 81: // key q pressed
+                    if (!qPressed) {
+                        sendUint8(18);
+                        qPressed = true;
+                    }
+                    break;
+                case 87: // eject mass
+                    if (!wPressed) {
+                        sendMouseMove();
+                        sendUint8(21);
+                        wPressed = true;
+                    }
+                    break;
+                case 27: // quit
+                    showOverlays(true);
+                    break;
+            }
         };
         wHandle.onkeyup = function (event) {
-            32 == event.keyCode && (spacePressed = false);
-            87 == event.keyCode && (wPressed = false);
-            81 == event.keyCode && qPressed && (sendUint8(19), qPressed = false)
+            switch (event.keyCode) {
+                case 32:
+                    spacePressed = false;
+                    break;
+                case 87:
+                    wPressed = false;
+                    break;
+                case 81:
+                    if (qPressed) {
+                        sendUint8(19);
+                        qPressed = false;
+                    }
+            }
         };
         wHandle.onblur = function () {
             sendUint8(19);
@@ -66,9 +97,15 @@
 
         wHandle.onresize = canvasResize;
         canvasResize();
-        wHandle.requestAnimationFrame ? wHandle.requestAnimationFrame(redrawGameScene) : setInterval(drawGameScene, 1E3 / 60);
+        if (wHandle.requestAnimationFrame) {
+            wHandle.requestAnimationFrame(redrawGameScene);
+        } else {
+            setInterval(drawGameScene, 1E3 / 60);
+        }
         setInterval(sendMouseMove, 40);
-        w && wjQuery("#region").val(w);
+        if (w) {
+            wjQuery("#region").val(w);
+        }
         Ha();
         setRegion(wjQuery("#region").val());
         null == ws && w && showConnecting();
@@ -92,7 +129,13 @@
                 e = 0;
             for (var i = 0; i < nodelist.length; i++) {
                 var node = nodelist[i];
-                !node.shouldRender() || node.prepareData || 20 >= node.size * viewZoom || (e = Math.max(node.size, e), a = Math.min(node.x, a), b = Math.min(node.y, b), c = Math.max(node.x, c), d = Math.max(node.y, d))
+                if (node.shouldRender() && !node.prepareData && 20 < node.size * viewZoom) {
+                    e = Math.max(node.size, e);
+                    a = Math.min(node.x, a);
+                    b = Math.min(node.y, b);
+                    c = Math.max(node.x, c);
+                    d = Math.max(node.y, d);
+                }
             }
             qTree = Quad.init({
                 minX: a - (e + 100),
