@@ -1276,7 +1276,7 @@
                     function Node(x, y, w, h, depth) {
                         this.x = x;
                         this.y = y;
-                        this.f = w;
+                        this.w = w;
                         this.h = h;
                         this.depth = depth;
                         this.items = [];
@@ -1288,7 +1288,7 @@
                     Node.prototype = {
                         x: 0,
                         y: 0,
-                        f: 0,
+                        w: 0,
                         getNameSize: 0,
                         depth: 0,
                         items: null,
@@ -1296,7 +1296,7 @@
                         exists: function (selector) {
                             for (var i = 0; i < this.items.length; ++i) {
                                 var item = this.items[i];
-                                if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.f && item.y < selector.y + selector.getNameSize) return true
+                                if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.w && item.y < selector.y + selector.getNameSize) return true
                             }
                             if (0 != this.nodes.length) {
                                 var self = this;
@@ -1328,14 +1328,14 @@
                             }
                         },
                         findInsertNode: function (a) {
-                            return a.x < this.x + this.f / 2 ? a.y < this.y + this.h / 2 ? 0 : 2 : a.y < this.y + this.h / 2 ? 1 : 3
+                            return a.x < this.x + this.w / 2 ? a.y < this.y + this.h / 2 ? 0 : 2 : a.y < this.y + this.h / 2 ? 1 : 3
                         },
                         findOverlappingNodes: function (a, b) {
-                            return a.x < this.x + this.f / 2 && (a.y < this.y + this.h / 2 && b(0) || a.y >= this.y + this.h / 2 && b(2)) || a.x >= this.x + this.f / 2 && (a.y < this.y + this.h / 2 && b(1) || a.y >= this.y + this.h / 2 && b(3)) ? true : false
+                            return a.x < this.x + this.w / 2 && (a.y < this.y + this.h / 2 && b(0) || a.y >= this.y + this.h / 2 && b(2)) || a.x >= this.x + this.w / 2 && (a.y < this.y + this.h / 2 && b(1) || a.y >= this.y + this.h / 2 && b(3)) ? true : false
                         },
                         devide: function () {
                             var a = this.depth + 1,
-                                c = this.f / 2,
+                                c = this.w / 2,
                                 d = this.h / 2;
                             this.nodes.push(new Node(this.x, this.y, c, d, a));
                             this.nodes.push(new Node(this.x + c, this.y, c, d, a));
@@ -1354,7 +1354,7 @@
                     var internalSelector = {
                         x: 0,
                         y: 0,
-                        f: 0,
+                        w: 0,
                         getNameSize: 0
                     };
                     return {
@@ -1368,7 +1368,7 @@
                         retrieve2: function (a, b, c, d, callback) {
                             internalSelector.x = a;
                             internalSelector.y = b;
-                            internalSelector.f = c;
+                            internalSelector.w = c;
                             internalSelector.getNameSize = d;
                             this.root.retrieve(internalSelector, callback)
                         },
