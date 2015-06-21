@@ -145,13 +145,16 @@
                 maxChildren: 2,
                 maxDepth: 4
             });
-            for (i = 0; i < nodelist.length; i++)
-                if (node = nodelist[i], node.shouldRender() && !(20 >= node.size * viewZoom))
+            for (i = 0; i < nodelist.length; i++) {
+                node = nodelist[i];
+                if (node.shouldRender() && !(20 >= node.size * viewZoom)) {
                     for (a = 0; a < node.points.length; ++a) {
                         b = node.points[a].x;
                         c = node.points[a].y;
                         b < t - canvasWidth / 2 / viewZoom || c < u - canvasHeight / 2 / viewZoom || b > t + canvasWidth / 2 / viewZoom || c > u + canvasHeight / 2 / viewZoom || qTree.insert(node.points[a]);
                     }
+                }
+            }
         }
     }
 
@@ -161,11 +164,14 @@
     }
 
     function getServerList() {
-        null == $ && ($ = {}, wjQuery("#region").children().each(function () {
-            var a = wjQuery(this),
-                b = a.val();
-            b && ($[b] = a.text())
-        }));
+        if (null == $) {
+            $ = {};
+            wjQuery("#region").children().each(function () {
+                var a = wjQuery(this),
+                    b = a.val();
+                b && ($[b] = a.text())
+            });
+        }
         wjQuery.get("info.php", function (a) {
             var b = {}, c;
             for (c in a.regions) {
@@ -184,7 +190,16 @@
     }
 
     function setRegion(a) {
-        a && a != w && (wjQuery("#region").val() != a && wjQuery("#region").val(a), w = wHandle.localStorage.location = a, wjQuery(".region-message").hide(), wjQuery(".region-message." + a).show(), wjQuery(".btn-needs-server").prop("disabled", false), ma && showConnecting())
+        if (a && a != w) {
+            if (wjQuery("#region").val() != a) {
+                wjQuery("#region").val(a);
+            }
+            w = wHandle.localStorage.location = a;
+            wjQuery(".region-message").hide();
+            wjQuery(".region-message." + a).show();
+            wjQuery(".btn-needs-server").prop("disabled", false);
+            ma && showConnecting();
+        }
     }
 
     function showOverlays(a) {
@@ -216,7 +231,10 @@
     }
 
     function showConnecting() {
-        ma && w && (wjQuery("#connecting").show(), attemptConnection())
+        if (ma && w) {
+            wjQuery("#connecting").show();
+            attemptConnection()
+        }
     }
 
     function wsConnect(wsUrl) {
@@ -234,7 +252,10 @@
         if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/.test(c) && 5 != +c.split(".")[0]) {
             wsUrl = "ws://" + c;
         }
-        localProtocolHttps && (wsUrl = wsUrl.split(":"), wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3));
+        if (localProtocolHttps) {
+            wsUrl = wsUrl.split(":");
+            wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3);
+        }
         G = [];
         n = [];
         A = {};
@@ -325,7 +346,9 @@
                 lineY = msg.getInt16(offset, true);
                 offset += 2;
                 if (!ta) {
-                    (ta = true, ca = lineX, da = lineY);
+                    ta = true;
+                    ca = lineX;
+                    da = lineY;
                 }
                 break;
             case 32: // add node
@@ -364,7 +387,24 @@
                 drawLeaderBoard();
                 break;
             case 64: // set border
-                ea = msg.getFloat64(offset, true), offset += 8, fa = msg.getFloat64(offset, true), offset += 8, ga = msg.getFloat64(offset, true), offset += 8, ha = msg.getFloat64(offset, true), offset += 8, posX = (ga + ea) / 2, posY = (ha + fa) / 2, posSize = 1, 0 == n.length && (t = posX, u = posY, viewZoom = posSize)
+                ea = msg.getFloat64(offset, true);
+                offset += 8;
+                fa = msg.getFloat64(offset, true)
+                ;
+                offset += 8;
+                ga = msg.getFloat64(offset, true);
+                offset += 8;
+                ha = msg.getFloat64(offset, true);
+                offset += 8;
+                posX = (ga + ea) / 2;
+                posY = (ha + fa) / 2;
+                posSize = 1;
+                if (0 == n.length) {
+                    t = posX;
+                    u = posY;
+                    viewZoom = posSize
+                }
+                break;
         }
     }
 
@@ -454,14 +494,20 @@
                 document.getElementById("overlays").style.display = "none";
                 n.push(node);
                 if (1 == n.length) {
-                    (t = node.x, u = node.y);
+                    t = node.x;
+                    u = node.y;
                 }
             }
         }
         offset += 4;
         code = view.getUint32(offset, true);
         offset += 4;
-        for (i = 0; i < code; i++) queueLength = view.getUint32(offset, true), offset += 4, name = A[queueLength], null != name && name.destroy();
+        for (i = 0; i < code; i++) {
+            queueLength = view.getUint32(offset, true);
+            offset += 4;
+            name = A[queueLength];
+            null != name && name.destroy();
+        }
         ua && 0 == n.length && showOverlays(false)
     }
 
@@ -470,7 +516,16 @@
         if (wsIsOpen()) {
             msg = rawMouseX - canvasWidth / 2;
             var b = rawMouseY - canvasHeight / 2;
-            64 > msg * msg + b * b || .01 > Math.abs(Ma - X) && .01 > Math.abs(Na - Y) || (Ma = X, Na = Y, msg = prepareData(21), msg.setUint8(0, 16), msg.setFloat64(1, X, true), msg.setFloat64(9, Y, true), msg.setUint32(17, 0, true), wsSend(msg))
+            if (64 <= msg * msg + b * b && !(.01 > Math.abs(Ma - X) && .01 > Math.abs(Na - Y))) {
+                Ma = X;
+                Na = Y;
+                msg = prepareData(21);
+                msg.setUint8(0, 16);
+                msg.setFloat64(1, X, true);
+                msg.setFloat64(9, Y, true);
+                msg.setUint32(17, 0, true);
+                wsSend(msg);
+            }
         }
     }
 
@@ -528,18 +583,40 @@
         timestamp = b;
         if (0 < n.length) {
             bb();
-            for (var c =
-                a = 0, d = 0; d < n.length; d++) n[d].updatePos(), a += n[d].x / n.length, c += n[d].y / n.length;
+            var c = a = 0;
+            for (var d = 0; d < n.length; d++) {
+                n[d].updatePos();
+                a += n[d].x / n.length;
+                c += n[d].y / n.length;
+            }
             posX = a;
             posY = c;
             posSize = viewZoom;
             t = (t + a) / 2;
             u = (u + c) / 2
-        } else t = (29 * t + posX) / 30, u = (29 * u + posY) / 30, viewZoom = (9 * viewZoom + posSize * viewRange()) / 10;
+        } else {
+            t = (29 * t + posX) / 30;
+            u = (29 * u + posY) / 30;
+            viewZoom = (9 * viewZoom + posSize * viewRange()) / 10;
+        }
         buildQTree();
         mouseCoordinateChange();
         xa || ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        xa ? (ctx.fillStyle = showDarkTheme ? "#111111" : "#F2FBFF", ctx.globalAlpha = .05, ctx.fillRect(0, 0, canvasWidth, canvasHeight), ctx.globalAlpha = 1) : drawGrid();
+        if (xa) {
+            if (showDarkTheme) {
+                ctx.fillStyle = '#111111';
+                ctx.globalAlpha = .05;
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                ctx.globalAlpha = 1;
+            } else {
+                ctx.fillStyle = '#F2FBFF';
+                ctx.globalAlpha = .05;
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                ctx.globalAlpha = 1;
+            }
+        } else {
+            drawGrid();
+        }
         nodelist.sort(function (a, b) {
             return a.size == b.size ? a.id - b.id : a.size - b.size
         });
@@ -562,14 +639,29 @@
             ctx.lineJoin = "round";
             ctx.globalAlpha = .5;
             ctx.beginPath();
-            for (d = 0; d < n.length; d++) ctx.moveTo(n[d].x, n[d].y), ctx.lineTo(ca, da);
+            for (d = 0; d < n.length; d++) {
+                ctx.moveTo(n[d].x, n[d].y);
+                ctx.lineTo(ca, da);
+            }
             ctx.stroke();
             ctx.restore()
         }
         ctx.restore();
         Canvas && Canvas.width && ctx.drawImage(Canvas, canvasWidth - Canvas.width - 10, 10);
         J = Math.max(J, eb());
-        0 != J && (null == ja && (ja = new ka(24, "#FFFFFF")), ja.setValue("Score: " + ~~(J / 100)), c = ja.render(), a = c.width, ctx.globalAlpha = .2, ctx.fillStyle = "#000000", ctx.fillRect(10, canvasHeight - 10 - 24 - 10, a + 10, 34), ctx.globalAlpha = 1, ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5));
+        if (0 != J) {
+            if (null == ja) {
+                ja = new ka(24, '#FFFFFF');
+            }
+            ja.setValue('Score: ' + ~~(J / 100));
+            c = ja.render();
+            a = c.width;
+            ctx.globalAlpha = .2;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(10, canvasHeight - 10 - 24 - 10, a + 10, 34);
+            ctx.globalAlpha = 1;
+            ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5);
+        }
         drawSplitIcon();
         b = Date.now() - b;
         b > 1E3 / 60 ? z -= .01 : b < 1E3 / 65 && (z += .01);
@@ -584,8 +676,20 @@
         ctx.strokeStyle = showDarkTheme ? "#AAAAAA" : "#000000";
         ctx.globalAlpha = .2;
         ctx.scale(viewZoom, viewZoom);
-        for (var a = canvasWidth / viewZoom, b = canvasHeight / viewZoom, c = -.5 + (-t + a / 2) % 50; c < a; c += 50) ctx.beginPath(), ctx.moveTo(c, 0), ctx.lineTo(c, b), ctx.stroke();
-        for (c = -.5 + (-u + b / 2) % 50; c < b; c += 50) ctx.beginPath(), ctx.moveTo(0, c), ctx.lineTo(a, c), ctx.stroke();
+        var a = canvasWidth / viewZoom,
+            b = canvasHeight / viewZoom;
+        for (var c = -.5 + (-t + a / 2) % 50; c < a; c += 50) {
+            ctx.beginPath();
+            ctx.moveTo(c, 0);
+            ctx.lineTo(c, b);
+            ctx.stroke();
+        }
+        for (c = -.5 + (-u + b / 2) % 50; c < b; c += 50) {
+            ctx.beginPath();
+            ctx.moveTo(0, c);
+            ctx.lineTo(a, c);
+            ctx.stroke();
+        }
         ctx.restore()
     }
 
@@ -762,7 +866,10 @@
                 hideOverlays()
             };
             wHandle.setGameMode = function (arg) {
-                arg != N && (N = arg, showConnecting())
+                if (arg != N) {
+                    N = arg;
+                    showConnecting();
+                }
             };
             wHandle.setAcid = function (arg) {
                 xa = arg
