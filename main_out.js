@@ -106,21 +106,21 @@
         if (w) {
             wjQuery("#region").val(w);
         }
-        Ha();
+        updateRegion();
         setRegion(wjQuery("#region").val());
         null == ws && w && showConnecting();
-        wjQuery("#overlays").show()
+        wjQuery("#overlays").show();
     }
 
 
     function handleWheel(event) {
         zoom *= Math.pow(.9, event.wheelDelta / -120 || event.detail || 0);
-        1 > zoom && (zoom = 1);
-        zoom > 4 / viewZoom && (zoom = 4 / viewZoom)
+        if (zoom < 1) zoom = 1;
+        if (zoom > 4 / viewZoom) zoom = 4 / viewZoom;
     }
 
     function buildQTree() {
-        if (.4 > viewZoom) qTree = null;
+        if (viewZoom < .4) qTree = null;
         else {
             var a = Number.POSITIVE_INFINITY,
                 b = Number.POSITIVE_INFINITY,
@@ -151,7 +151,7 @@
                     for (a = 0; a < node.points.length; ++a) {
                         b = node.points[a].x;
                         c = node.points[a].y;
-                        b < t - canvasWidth / 2 / viewZoom || c < u - canvasHeight / 2 / viewZoom || b > t + canvasWidth / 2 / viewZoom || c > u + canvasHeight / 2 / viewZoom || qTree.insert(node.points[a]);
+                        b < nodex - canvasWidth / 2 / viewZoom || c < nodey - canvasHeight / 2 / viewZoom || b > nodex + canvasWidth / 2 / viewZoom || c > nodey + canvasHeight / 2 / viewZoom || qTree.insert(node.points[a]);
                     }
                 }
             }
@@ -159,8 +159,8 @@
     }
 
     function mouseCoordinateChange() {
-        X = (rawMouseX - canvasWidth / 2) / viewZoom + t;
-        Y = (rawMouseY - canvasHeight / 2) / viewZoom + u
+        X = (rawMouseX - canvasWidth / 2) / viewZoom + nodex;
+        Y = (rawMouseY - canvasHeight / 2) / viewZoom + nodey
     }
 
     function getServerList() {
@@ -173,20 +173,20 @@
             });
         }
         wjQuery.get("info.php", function (a) {
-            var b = {}, c;
-            for (c in a.regions) {
-                var d = c.split(":")[0];
+            var b = {}, region;
+            for (region in a.regions) {
+                var d = region.split(":")[0];
                 b[d] = b[d] || 0;
-                b[d] += a.regions[c].numPlayers
+                b[d] += a.regions[region].numPlayers
             }
-            for (c in b) wjQuery('#region option[value="' + c + '"]').text($[c] + " (" + b[c] + " players)")
+            for (region in b) wjQuery('#region option[value="' + region + '"]').text($[region] + " (" + b[region] + " players)")
         }, "json")
     }
 
     function hideOverlays() {
         wjQuery("#adsBottom").hide();
         wjQuery("#overlays").hide();
-        Ha()
+        updateRegion()
     }
 
     function setRegion(a) {
@@ -203,12 +203,12 @@
     }
 
     function showOverlays(a) {
-        F = null;
+        userNickName = null;
         wjQuery("#overlays").fadeIn(a ? 200 : 3E3);
         a || wjQuery("#adsBottom").fadeIn(3E3)
     }
 
-    function Ha() {
+    function updateRegion() {
         wjQuery("#region").val() ? wHandle.localStorage.location = wjQuery("#region").val() : wHandle.localStorage.location && wjQuery("#region").val(wHandle.localStorage.location);
         wjQuery("#region").val() ? wjQuery("#locationKnown").append(wjQuery("#region")) : wjQuery("#locationUnknown").append(wjQuery("#region"))
     }
@@ -219,7 +219,7 @@
             error: function () {
                 setTimeout(attemptConnection, 1E3)
             },
-            success: function (a) {
+            success: function (args) {
                 wsConnect("ws://" + CONNECTION_URL)
             },
             dataType: "text",
@@ -256,14 +256,14 @@
             wsUrl = wsUrl.split(":");
             wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3);
         }
-        G = [];
-        n = [];
+        nodesOnScreen = [];
+        playerCells = [];
         A = {};
         nodelist = [];
         Cells = [];
         leaderBoard = [];
-        Canvas = y = null;
-        J = 0;
+        Canvas = teamScores = null;
+        userScore = 0;
         console.log("Connecting to " + wsUrl);
         ws = new WebSocket(wsUrl);
         ws.binaryType = "arraybuffer";
@@ -271,7 +271,7 @@
         ws.onmessage = onWsMessage;
         ws.onclose = onWsClose;
         ws.onerror = function () {
-            console.log("socket error")
+            console.log("socket error");
         }
     }
 
@@ -296,7 +296,7 @@
         msg.setUint8(0, 255);
         msg.setUint32(1, 673720361, true);
         wsSend(msg);
-        Ka()
+        sendNickName()
     }
 
     function onWsClose() {
@@ -337,22 +337,22 @@
                 offset += 4;
                 break;
             case 20: // clear nodes
-                n = [];
-                G = [];
+                playerCells = [];
+                nodesOnScreen = [];
                 break;
             case 21: // draw line
                 lineX = msg.getInt16(offset, true);
                 offset += 2;
                 lineY = msg.getInt16(offset, true);
                 offset += 2;
-                if (!ta) {
-                    ta = true;
-                    ca = lineX;
-                    da = lineY;
+                if (!showLine) {
+                    showLine = true;
+                    showLineX = lineX;
+                    showLineY = lineY;
                 }
                 break;
             case 32: // add node
-                G.push(msg.getUint32(offset, true));
+                nodesOnScreen.push(msg.getUint32(offset, true));
                 offset += 4;
                 break;
             case 48: // update leaderboard (custom text)
@@ -362,7 +362,7 @@
                 if (!setCustomLB) {
                     noRanking = false;
                 }
-                y = null;
+                teamScores = null;
                 var validElements = msg.getUint32(offset, true);
                 offset += 4;
                 leaderBoard = [];
@@ -377,32 +377,31 @@
                 drawLeaderBoard();
                 break;
             case 50: // update leaderboard (teams)
-                y = [];
-                var validElements = msg.getUint32(offset, true);
+                teamScores = [];
+                var teamNum = msg.getUint32(offset, true);
                 offset += 4;
-                for (var i = 0; i < validElements; ++i) {
-                    y.push(msg.getFloat32(offset, true));
+                for (var i = 0; i < teamNum; ++i) {
+                    teamScores.push(msg.getFloat32(offset, true));
                     offset += 4;
                 }
                 drawLeaderBoard();
                 break;
             case 64: // set border
-                ea = msg.getFloat64(offset, true);
+                leftPos = msg.getFloat64(offset, true);
                 offset += 8;
-                fa = msg.getFloat64(offset, true)
-                ;
+                topPos = msg.getFloat64(offset, true);
                 offset += 8;
-                ga = msg.getFloat64(offset, true);
+                rightPos = msg.getFloat64(offset, true);
                 offset += 8;
-                ha = msg.getFloat64(offset, true);
+                bottomPos = msg.getFloat64(offset, true);
                 offset += 8;
-                posX = (ga + ea) / 2;
-                posY = (ha + fa) / 2;
+                posX = (rightPos + leftPos) / 2;
+                posY = (bottomPos + topPos) / 2;
                 posSize = 1;
-                if (0 == n.length) {
-                    t = posX;
-                    u = posY;
-                    viewZoom = posSize
+                if (0 == playerCells.length) {
+                    nodex = posX;
+                    nodey = posY;
+                    viewZoom = posSize;
                 }
                 break;
         }
@@ -479,12 +478,12 @@
             node.updateTime = timestamp;
             node.nnn = flags;
             name && node.setName(name);
-            if (-1 != G.indexOf(nodeId) && -1 == n.indexOf(node)) {
+            if (-1 != nodesOnScreen.indexOf(nodeId) && -1 == playerCells.indexOf(node)) {
                 document.getElementById("overlays").style.display = "none";
-                n.push(node);
-                if (1 == n.length) {
-                    t = node.x;
-                    u = node.y;
+                playerCells.push(node);
+                if (1 == playerCells.length) {
+                    nodex = node.x;
+                    nodey = node.y;
                 }
             }
         }
@@ -496,7 +495,7 @@
             node = A[nodeId];
             null != node && node.destroy();
         }
-        ua && 0 == n.length && showOverlays(false)
+        ua && 0 == playerCells.length && showOverlays(false)
     }
 
     function sendMouseMove() {
@@ -504,9 +503,9 @@
         if (wsIsOpen()) {
             msg = rawMouseX - canvasWidth / 2;
             var b = rawMouseY - canvasHeight / 2;
-            if (64 <= msg * msg + b * b && !(.01 > Math.abs(Ma - X) && .01 > Math.abs(Na - Y))) {
-                Ma = X;
-                Na = Y;
+            if (64 <= msg * msg + b * b && !(.01 > Math.abs(oldX - X) && .01 > Math.abs(oldY - Y))) {
+                oldX = X;
+                oldY = Y;
                 msg = prepareData(21);
                 msg.setUint8(0, 16);
                 msg.setFloat64(1, X, true);
@@ -517,11 +516,11 @@
         }
     }
 
-    function Ka() {
-        if (wsIsOpen() && null != F) {
-            var msg = prepareData(1 + 2 * F.length);
+    function sendNickName() {
+        if (wsIsOpen() && null != userNickName) {
+            var msg = prepareData(1 + 2 * userNickName.length);
             msg.setUint8(0, 0);
-            for (var b = 0; b < F.length; ++b) msg.setUint16(1 + 2 * b, F.charCodeAt(b), true);
+            for (var b = 0; b < userNickName.length; ++b) msg.setUint16(1 + 2 * b, userNickName.charCodeAt(b), true);
             wsSend(msg)
         }
     }
@@ -537,6 +536,8 @@
             wsSend(msg)
         }
     }
+
+
 
     function redrawGameScene() {
         drawGameScene();
@@ -554,37 +555,38 @@
     function viewRange() {
         var a;
         a = Math.max(canvasHeight / 1080, canvasWidth / 1920);
-        return a *= zoom
+        return a *= zoom;
     }
 
-    function bb() {
-        if (0 != n.length) {
-            for (var a = 0, b = 0; b < n.length; b++) a += n[b].size;
+    function calcViewZoom() {
+        if (0 != playerCells.length) {
+            for (var a = 0, b = 0; b < playerCells.length; b++) a += playerCells[b].size;
             a = Math.pow(Math.min(64 / a, 1), .4) * viewRange();
             viewZoom = (9 * viewZoom + a) / 10
         }
     }
 
     function drawGameScene() {
-        var a, b = Date.now();
+        var a;
+        var b = Date.now();
         ++cb;
         timestamp = b;
-        if (0 < n.length) {
-            bb();
-            var c = a = 0;
-            for (var d = 0; d < n.length; d++) {
-                n[d].updatePos();
-                a += n[d].x / n.length;
-                c += n[d].y / n.length;
+        if (0 < playerCells.length) {
+            calcViewZoom();
+            var scoreTextImage = a = 0;
+            for (var d = 0; d < playerCells.length; d++) {
+                playerCells[d].updatePos();
+                a += playerCells[d].x / playerCells.length;
+                scoreTextImage += playerCells[d].y / playerCells.length;
             }
             posX = a;
-            posY = c;
+            posY = scoreTextImage;
             posSize = viewZoom;
-            t = (t + a) / 2;
-            u = (u + c) / 2
+            nodex = (nodex + a) / 2;
+            nodey = (nodey + scoreTextImage) / 2
         } else {
-            t = (29 * t + posX) / 30;
-            u = (29 * u + posY) / 30;
+            nodex = (29 * nodex + posX) / 30;
+            nodey = (29 * nodey + posY) / 30;
             viewZoom = (9 * viewZoom + posSize * viewRange()) / 10;
         }
         buildQTree();
@@ -611,15 +613,14 @@
         ctx.save();
         ctx.translate(canvasWidth / 2, canvasHeight / 2);
         ctx.scale(viewZoom, viewZoom);
-        ctx.translate(-t, -u);
+        ctx.translate(-nodex, -nodey);
         for (d = 0; d < Cells.length; d++) Cells[d].drawOneCell(ctx);
 
         for (d = 0; d < nodelist.length; d++) nodelist[d].drawOneCell(ctx);
         //console.log(Cells.length);
-        if (ta) {
-            ca = (3 * ca + lineX) /
-                4;
-            da = (3 * da + lineY) / 4;
+        if (showLine) {
+            showLineX = (3 * showLineX + lineX) / 4;
+            showLineY = (3 * showLineY + lineY) / 4;
             ctx.save();
             ctx.strokeStyle = "#FFAAAA";
             ctx.lineWidth = 10;
@@ -627,28 +628,29 @@
             ctx.lineJoin = "round";
             ctx.globalAlpha = .5;
             ctx.beginPath();
-            for (d = 0; d < n.length; d++) {
-                ctx.moveTo(n[d].x, n[d].y);
-                ctx.lineTo(ca, da);
+            for (d = 0; d < playerCells.length; d++) {
+                ctx.moveTo(playerCells[d].x, playerCells[d].y);
+                ctx.lineTo(showLineX, showLineY);
             }
             ctx.stroke();
             ctx.restore()
         }
         ctx.restore();
         Canvas && Canvas.width && ctx.drawImage(Canvas, canvasWidth - Canvas.width - 10, 10);
-        J = Math.max(J, eb());
-        if (0 != J) {
-            if (null == ja) {
-                ja = new ka(24, '#FFFFFF');
+        userScore = Math.max(userScore, calcScore());
+        //draw score
+        if (0 != userScore) {
+            if (scoreText == null) {
+                scoreText = new utext(24, '#FFFFFF');
             }
-            ja.setValue('Score: ' + ~~(J / 100));
-            c = ja.render();
-            a = c.width;
+            scoreText.setValue('Score: ' + ~~(userScore / 100));
+            scoreTextImage = scoreText.render();
+            a = scoreTextImage.width;
             ctx.globalAlpha = .2;
             ctx.fillStyle = '#000000';
             ctx.fillRect(10, canvasHeight - 10 - 24 - 10, a + 10, 34);
             ctx.globalAlpha = 1;
-            ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5);
+            ctx.drawImage(scoreTextImage, 15, canvasHeight - 10 - 24 - 5);
         }
         drawSplitIcon();
         b = Date.now() - b;
@@ -666,13 +668,13 @@
         ctx.scale(viewZoom, viewZoom);
         var a = canvasWidth / viewZoom,
             b = canvasHeight / viewZoom;
-        for (var c = -.5 + (-t + a / 2) % 50; c < a; c += 50) {
+        for (var c = -.5 + (-nodex + a / 2) % 50; c < a; c += 50) {
             ctx.beginPath();
             ctx.moveTo(c, 0);
             ctx.lineTo(c, b);
             ctx.stroke();
         }
-        for (c = -.5 + (-u + b / 2) % 50; c < b; c += 50) {
+        for (c = -.5 + (-nodey + b / 2) % 50; c < b; c += 50) {
             ctx.beginPath();
             ctx.moveTo(0, c);
             ctx.lineTo(a, c);
@@ -683,68 +685,68 @@
 
     function drawSplitIcon() {
         if (isTouchStart && splitIcon.width) {
-            var a = canvasWidth / 5;
-            ctx.drawImage(splitIcon, 5, 5, a, a)
+            var size = canvasWidth / 5;
+            ctx.drawImage(splitIcon, 5, 5, size, size)
         }
     }
 
-    function eb() {
-        for (var a = 0, b = 0; b < n.length; b++) a += n[b].nSize * n[b].nSize;
-        return a
+    function calcScore() {
+        for (var score = 0, i = 0; i < playerCells.length; i++) score += playerCells[i].nSize * playerCells[i].nSize;
+        return score;
     }
 
     function drawLeaderBoard() {
         Canvas = null;
-        if (null != y || 0 != leaderBoard.length)
-            if (null != y || showName) {
+        if (null != teamScores || 0 != leaderBoard.length)
+            if (null != teamScores || showName) {
                 Canvas = document.createElement("canvas");
                 var ctx = Canvas.getContext("2d"),
                     b = 60,
-                    b = null == y ? b + 24 * leaderBoard.length : b + 180,
-                    c = Math.min(200, .3 * canvasWidth) / 200;
-                Canvas.width = 200 * c;
-                Canvas.height = b * c;
-                ctx.scale(c, c);
+                    b = null == teamScores ? b + 24 * leaderBoard.length : b + 180,
+                    tmpString = Math.min(200, .3 * canvasWidth) / 200;
+                Canvas.width = 200 * tmpString;
+                Canvas.height = b * tmpString;
+                ctx.scale(tmpString, tmpString);
                 ctx.globalAlpha = .4;
                 ctx.fillStyle = "#000000";
                 ctx.fillRect(0, 0, 200, b);
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = "#FFFFFF";
-                c = null;
-                c = "Leaderboard";
+                tmpString = null;
+                tmpString = "Leaderboard";
                 ctx.font = "30px Ubuntu";
-                ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 40);
-                if (null == y) {
+                ctx.fillText(tmpString, 100 - ctx.measureText(tmpString).width / 2, 40);
+                if (null == teamScores) {
                     for (ctx.font = "20px Ubuntu", b = 0; b < leaderBoard.length; ++b) {
-                        c = leaderBoard[b].name || "An unnamed cell";
+                        tmpString = leaderBoard[b].name || "An unnamed cell";
                         if (!showName) {
-                            (c = "An unnamed cell");
+                            (tmpString = "An unnamed cell");
                         }
-                        if (-1 != G.indexOf(leaderBoard[b].id)) {
-                            n[0].name && (c = n[0].name);
+                        if (-1 != nodesOnScreen.indexOf(leaderBoard[b].id)) {
+                            playerCells[0].name && (tmpString = playerCells[0].name);
                             ctx.fillStyle = "#FFAAAA";
                             if (!noRanking) {
-                                c = b + 1 + ". " + c;
+                                tmpString = b + 1 + ". " + tmpString;
                             }
-                            ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 70 + 24 * b);
+                            ctx.fillText(tmpString, 100 - ctx.measureText(tmpString).width / 2, 70 + 24 * b);
                         } else {
                             ctx.fillStyle = "#FFFFFF";
                             if (!noRanking) {
-                                c = b + 1 + ". " + c;
+                                tmpString = b + 1 + ". " + tmpString;
                             }
-                            ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 70 + 24 * b);
+                            ctx.fillText(tmpString, 100 - ctx.measureText(tmpString).width / 2, 70 + 24 * b);
                         }
                     }
                 }
                 else {
-                    for (b = c = 0; b < y.length; ++b) {
-                        var d = c + y[b] * Math.PI * 2;
+                    for (b = tmpString = 0; b < teamScores.length; ++b) {
+                        var d = tmpString + teamScores[b] * Math.PI * 2;
                         ctx.fillStyle = teamColor[b + 1];
                         ctx.beginPath();
                         ctx.moveTo(100, 140);
-                        ctx.arc(100, 140, 80, c, d, false);
+                        ctx.arc(100, 140, 80, tmpString, d, false);
                         ctx.fill();
-                        c = d
+                        tmpString = d
                     }
                 }
             }
@@ -762,7 +764,7 @@
         this.setName(uname)
     }
 
-    function ka(usize, ucolor, ustroke, ustrokecolor) {
+    function utext(usize, ucolor, ustroke, ustrokecolor) {
         usize && (this._size = usize);
         ucolor && (this._color = ucolor);
         this._stroke = !!ustroke;
@@ -776,11 +778,12 @@
     else {
         var nCanvas, ctx, Canvas, canvasWidth, canvasHeight, qTree = null,
             ws = null,
-            t = 0,
-            u = 0,
-            G = [],
-            n = [],
-            A = {}, nodelist = [],
+            nodex = 0,
+            nodey = 0,
+            nodesOnScreen = [],
+            playerCells = [],
+            A = {},
+            nodelist = [],
             Cells = [],
             leaderBoard = [],
             rawMouseX = 0,
@@ -789,31 +792,31 @@
             Y = -1,
             cb = 0,
             timestamp = 0,
-            F = null,
-            ea = 0,
-            fa = 0,
-            ga = 1E4,
-            ha = 1E4,
+            userNickName = null,
+            leftPos = 0,
+            topPos = 0,
+            rightPos = 1E4,
+            bottomPos = 1E4,
             viewZoom = 1,
             w = null,
             showSkin = true,
             showName = true,
             showColor = false,
             ua = false,
-            J = 0,
+            userScore = 0,
             showDarkTheme = false,
             showMass = false,
-            posX = t = ~~((ea + ga) / 2),
-            posY = u = ~~((fa + ha) / 2),
+            posX = nodex = ~~((leftPos + rightPos) / 2),
+            posY = nodey = ~~((topPos + bottomPos) / 2),
             posSize = 1,
             N = "",
-            y = null,
+            teamScores = null,
             ma = false,
-            ta = false,
+            showLine = false,
             lineX = 0,
             lineY = 0,
-            ca = 0,
-            da = 0,
+            showLineX = 0,
+            showLineY = 0,
             Ra = 0,
             teamColor = ["#333333", "#FF3333", "#33FF33", "#3333FF"],
             xa = false,
@@ -828,9 +831,9 @@
             var $ = null;
             wHandle.setNick = function (arg) {
                 hideOverlays();
-                F = arg;
-                Ka();
-                J = 0
+                userNickName = arg;
+                sendNickName();
+                userScore = 0
             };
             wHandle.setRegion = setRegion;
             wHandle.setSkins = function (arg) {
@@ -849,7 +852,7 @@
                 showMass = arg
             };
             wHandle.spectate = function () {
-                F = null;
+                userNickName = null;
                 sendUint8(1);
                 hideOverlays()
             };
@@ -925,11 +928,11 @@
 
 
             var delay = 500,
-                Ma = -1,
-                Na = -1,
+                oldX = -1,
+                oldY = -1,
                 Canvas = null,
                 z = 1,
-                ja = null,
+                scoreText = null,
                 K = {},
                 knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
                 hb = ["8", "nasa"],
@@ -959,21 +962,21 @@
                 isAgitated: false,
                 wasSimpleDrawing: true,
                 destroy: function () {
-                    var a;
-                    for (a = 0; a < nodelist.length; a++)
-                        if (nodelist[a] == this) {
-                            nodelist.splice(a, 1);
-                            break
+                    var i;
+                    for (i = 0; i < nodelist.length; i++)
+                        if (nodelist[i] == this) {
+                            nodelist.splice(i, 1);
+                            break;
                         }
                     delete A[this.id];
-                    a = n.indexOf(this);
-                    if (-1 != a) {
+                    i = playerCells.indexOf(this);
+                    if (i != -1) {
                         ua = true;
-                        n.splice(a, 1);
+                        playerCells.splice(i, 1);
                     }
-                    a = G.indexOf(this.id);
-                    if (-1 != a) {
-                        G.splice(a, 1);
+                    i = nodesOnScreen.indexOf(this.id);
+                    if (i != -1) {
+                        nodesOnScreen.splice(i, 1);
                     }
                     this.destroyed = true;
                     Cells.push(this)
@@ -981,10 +984,10 @@
                 getNameSize: function () {
                     return Math.max(~~(.3 * this.size), 24)
                 },
-                setName: function (a) {
-                    if (this.name = a) {
+                setName: function (name) {
+                    if (this.name = name) {
                         if (null == this.nameCache) {
-                            this.nameCache = new ka(this.getNameSize(), "#FFFFFF", true, "#000000");
+                            this.nameCache = new utext(this.getNameSize(), "#FFFFFF", true, "#000000");
                             this.nameCache.setValue(this.name);
                         } else {
                             this.nameCache.setSize(this.getNameSize());
@@ -993,33 +996,33 @@
                     }
                 },
                 createPoints: function () {
-                    for (var a = this.getNumPoints(); this.points.length > a;) {
+                    for (var i = this.getSamplePointsNum(); this.points.length > i;) {
                         var b = ~~(Math.random() * this.points.length);
                         this.points.splice(b, 1);
                         this.pointsAcc.splice(b, 1)
                     }
-                    if (0 == this.points.length && 0 < a) {
+                    if (0 == this.points.length && 0 < i) {
                         this.points.push({
                             S: this,
-                            e: this.size,
+                            size: this.size,
                             x: this.x,
                             y: this.y
                         });
                         this.pointsAcc.push(Math.random() - .5);
                     }
-                    while (this.points.length < a) {
+                    while (this.points.length < i) {
                         var b = ~~(Math.random() * this.points.length),
                             c = this.points[b];
                         this.points.splice(b, 0, {
                             S: this,
-                            e: c.e,
+                            size: c.size,
                             x: c.x,
                             y: c.y
                         });
                         this.pointsAcc.splice(b, 0, this.pointsAcc[b])
                     }
                 },
-                getNumPoints: function () {
+                getSamplePointsNum: function () {
                     if (0 == this.id) return 16;
                     var a = 10;
                     20 > this.size && (a = 0);
@@ -1028,7 +1031,7 @@
                     this.isVirus || (b *= viewZoom);
                     b *= z;
                     this.nnn & 32 && (b *= .25);
-                    return ~~Math.max(b, a)
+                    return Math.max(b, a);
                 },
                 movePoints: function () {
                     this.createPoints();
@@ -1042,9 +1045,9 @@
                         b[d] = (e + m + 8 * b[d]) / 10
                     }
                     for (var h = this, g = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), d = 0; d < c; ++d) {
-                        var f = a[d].e,
-                            e = a[(d - 1 + c) % c].e,
-                            m = a[(d + 1) % c].e;
+                        var f = a[d].size,
+                            e = a[(d - 1 + c) % c].size,
+                            m = a[(d + 1) % c].size;
                         if (15 < this.size && null != qTree && 20 < this.size * viewZoom && 0 != this.id) {
                             var l = false,
                                 n = a[d].x,
@@ -1054,7 +1057,7 @@
                                     l = true;
                                 }
                             });
-                            if (!l && a[d].x < ea || a[d].y < fa || a[d].x > ga || a[d].y > ha) {
+                            if (!l && a[d].x < leftPos || a[d].y < topPos || a[d].x > rightPos || a[d].y > bottomPos) {
                                 l = true;
                             }
                             if (l) {
@@ -1067,9 +1070,9 @@
                         f += b[d];
                         0 > f && (f = 0);
                         f = this.isAgitated ? (19 * f + this.size) / 20 : (12 * f + this.size) / 13;
-                        a[d].e = (e + m + 8 * f) / 10;
+                        a[d].size = (e + m + 8 * f) / 10;
                         e = 2 * Math.PI / c;
-                        m = this.points[d].e;
+                        m = this.points[d].size;
                         this.isVirus && 0 == d % 2 && (m += 5);
                         a[d].x = this.x + Math.cos(e * d + g) * m;
                         a[d].y = this.y + Math.sin(e * d + g) * m
@@ -1095,15 +1098,15 @@
                     if (0 == this.id) {
                         return true
                     } else {
-                        return this.x + this.size + 40 < t - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < u - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > t + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > u + canvasHeight / 2 / viewZoom ? false : true
+                        return this.x + this.size + 40 < nodex - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < nodey - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > nodex + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > nodey + canvasHeight / 2 / viewZoom ? false : true
                     }
                 },
                 drawOneCell: function (a) {
                     if (this.shouldRender()) {
                         var b = 0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom;
-                        5 > this.getNumPoints() && (b = true);
+                        5 > this.getSamplePointsNum() && (b = true);
                         if (this.wasSimpleDrawing && !b)
-                            for (var c = 0; c < this.points.length; c++) this.points[c].e = this.size;
+                            for (var c = 0; c < this.points.length; c++) this.points[c].size = this.size;
                         this.wasSimpleDrawing = b;
                         a.save();
                         this.drawTime = timestamp;
@@ -1126,7 +1129,7 @@
                         else {
                             this.movePoints();
                             a.beginPath();
-                            var d = this.getNumPoints();
+                            var d = this.getSamplePointsNum();
                             a.moveTo(this.points[0].x, this.points[0].y);
                             for (c = 1; c <= d; ++c) {
                                 var e = c % d;
@@ -1170,7 +1173,7 @@
                         if (null != e && c) {
                             a.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
                         }
-                        c = -1 != n.indexOf(this);
+                        c = -1 != playerCells.indexOf(this);
                         if (0 != this.id) {
                             b = ~~this.y;
                             if ((showName || c) && this.name && this.nameCache && (null == e || -1 == hb.indexOf(d))) {
@@ -1185,9 +1188,9 @@
                                 a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                                 b += e.height / 2 / d + 4
                             }
-                            if (showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
+                            if (showMass && (c || 0 == playerCells.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
                                 if (null == this.sizeCache) {
-                                    this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
+                                    this.sizeCache = new utext(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
                                 }
                                 c = this.sizeCache;
                                 c.setSize(this.getNameSize() / 2);
@@ -1204,7 +1207,7 @@
                     }
                 }
             };
-            ka.prototype = {
+            utext.prototype = {
                 _value: "",
                 _color: "#000000",
                 _stroke: false,
@@ -1265,7 +1268,7 @@
                         this._stroke && b.strokeText(c, 3, e - h / 2);
                         b.fillText(c, 3, e - h / 2)
                     }
-                    return this._canvas
+                    return this._canvas;
                 }
             };
             Date.now || (Date.now = function () {
@@ -1289,14 +1292,14 @@
                         x: 0,
                         y: 0,
                         w: 0,
-                        getNameSize: 0,
+                        h: 0,
                         depth: 0,
                         items: null,
                         nodes: null,
                         exists: function (selector) {
                             for (var i = 0; i < this.items.length; ++i) {
                                 var item = this.items[i];
-                                if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.w && item.y < selector.y + selector.getNameSize) return true
+                                if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.w && item.y < selector.y + selector.h) return true
                             }
                             if (0 != this.nodes.length) {
                                 var self = this;
@@ -1355,7 +1358,7 @@
                         x: 0,
                         y: 0,
                         w: 0,
-                        getNameSize: 0
+                        h: 0
                     };
                     return {
                         root: new Node(args.minX, args.minY, args.maxX - args.minX, args.maxY - args.minY, 0),
@@ -1365,11 +1368,11 @@
                         retrieve: function (a, b) {
                             this.root.retrieve(a, b)
                         },
-                        retrieve2: function (a, b, c, d, callback) {
-                            internalSelector.x = a;
-                            internalSelector.y = b;
-                            internalSelector.w = c;
-                            internalSelector.getNameSize = d;
+                        retrieve2: function (x, y, w, h, callback) {
+                            internalSelector.x = x;
+                            internalSelector.y = y;
+                            internalSelector.w = w;
+                            internalSelector.h = h;
                             this.root.retrieve(internalSelector, callback)
                         },
                         exists: function (a) {
@@ -1383,9 +1386,9 @@
             };
             wjQuery(function () {
                 function renderFavicon() {
-                    if (0 < n.length) {
-                        redCell.color = n[0].color;
-                        redCell.setName(n[0].name);
+                    if (0 < playerCells.length) {
+                        redCell.color = playerCells[0].color;
+                        redCell.setName(playerCells[0].name);
                     }
                     ctx.clearRect(0, 0, 32, 32);
                     ctx.save();
