@@ -565,7 +565,7 @@
 
     function viewRange() {
         var a;
-        a = 1 * Math.max(canvasHeight / 1080, canvasWidth / 1920);
+        a = Math.max(canvasHeight / 1080, canvasWidth / 1920);
         return a *= zoom
     }
 
@@ -874,7 +874,13 @@
             wHandle.setAcid = function (arg) {
                 xa = arg
             };
-            null != wHandle.localStorage && (null == wHandle.localStorage.AB8 && (wHandle.localStorage.AB8 = 0 + ~~(100 * Math.random())), Ra = +wHandle.localStorage.AB8, wHandle.ABGroup = Ra);
+            if (null != wHandle.localStorage) {
+                if (null == wHandle.localStorage.AB8) {
+                    wHandle.localStorage.AB8 = ~~(100 * Math.random());
+                }
+                Ra = +wHandle.localStorage.AB8;
+                wHandle.ABGroup = Ra;
+            }
             wjQuery.get(localProtocol + "//gc.agar.io", function (a) {
                 var b = a.split(" ");
                 a = b[0];
@@ -973,9 +979,14 @@
                         }
                     delete A[this.id];
                     a = n.indexOf(this);
-                    -1 != a && (ua = true, n.splice(a, 1));
+                    if (-1 != a) {
+                        ua = true;
+                        n.splice(a, 1);
+                    }
                     a = G.indexOf(this.id);
-                    -1 != a && G.splice(a, 1);
+                    if (-1 != a) {
+                        G.splice(a, 1);
+                    }
                     this.destroyed = true;
                     Cells.push(this)
                 },
@@ -983,7 +994,15 @@
                     return Math.max(~~(.3 * this.size), 24)
                 },
                 setName: function (a) {
-                    if (this.name = a) null == this.nameCache ? this.nameCache = new ka(this.getNameSize(), "#FFFFFF", true, "#000000") : this.nameCache.setSize(this.getNameSize()), this.nameCache.setValue(this.name)
+                    if (this.name = a) {
+                        if (null == this.nameCache) {
+                            this.nameCache = new ka(this.getNameSize(), "#FFFFFF", true, "#000000");
+                            this.nameCache.setValue(this.name);
+                        } else {
+                            this.nameCache.setSize(this.getNameSize());
+                            this.nameCache.setValue(this.name);
+                        }
+                    }
                 },
                 createPoints: function () {
                     for (var a = this.getNumPoints(); this.points.length > a;) {
@@ -991,13 +1010,16 @@
                         this.points.splice(b, 1);
                         this.pointsAcc.splice(b, 1)
                     }
-                    0 == this.points.length && 0 < a && (this.points.push({
-                        S: this,
-                        e: this.size,
-                        x: this.x,
-                        y: this.y
-                    }), this.pointsAcc.push(Math.random() - .5));
-                    for (; this.points.length < a;) {
+                    if (0 == this.points.length && 0 < a) {
+                        this.points.push({
+                            S: this,
+                            e: this.size,
+                            x: this.x,
+                            y: this.y
+                        });
+                        this.pointsAcc.push(Math.random() - .5);
+                    }
+                    while (this.points.length < a) {
                         var b = ~~(Math.random() * this.points.length),
                             c = this.points[b];
                         this.points.splice(b, 0, {
@@ -1039,12 +1061,20 @@
                             var l = false,
                                 n = a[d].x,
                                 q = a[d].y;
-                            qTree.retrieve2(n -
-                                5, q - 5, 10, 10, function (a) {
-                                a.S != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y) && (l = true)
+                            qTree.retrieve2(n - 5, q - 5, 10, 10, function (a) {
+                                if (a.S != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
+                                    l = true;
+                                }
                             });
-                            !l && (a[d].x < ea || a[d].y < fa || a[d].x > ga || a[d].y > ha) && (l = true);
-                            l && (0 < b[d] && (b[d] = 0), b[d] -= 1)
+                            if (!l && a[d].x < ea || a[d].y < fa || a[d].x > ga || a[d].y > ha) {
+                                l = true;
+                            }
+                            if (l) {
+                                if (0 < b[d]) {
+                                    (b[d] = 0);
+                                }
+                                b[d] -= 1;
+                            }
                         }
                         f += b[d];
                         0 > f && (f = 0);
@@ -1094,8 +1124,17 @@
                         a.lineWidth = 10;
                         a.lineCap = "round";
                         a.lineJoin = this.isVirus ? "miter" : "round";
-                        showColor ? (a.fillStyle = "#FFFFFF", a.strokeStyle = "#AAAAAA") : (a.fillStyle = this.color, a.strokeStyle = this.color);
-                        if (b) a.beginPath(), a.arc(this.x, this.y, this.size, 0, 2 * Math.PI, false);
+                        if (showColor) {
+                            a.fillStyle = "#FFFFFF";
+                            a.strokeStyle = "#AAAAAA";
+                        } else {
+                            a.fillStyle = this.color;
+                            a.strokeStyle = this.color;
+                        }
+                        if (b) {
+                            a.beginPath();
+                            a.arc(this.x, this.y, this.size, 0, 2 * Math.PI, false);
+                        }
                         else {
                             this.movePoints();
                             a.beginPath();
@@ -1108,14 +1147,41 @@
                         }
                         a.closePath();
                         d = this.name.toLowerCase();
-                        !this.isAgitated && showSkin && ":teams" != N ? -1 != knownNameDict.indexOf(d) ? (K.hasOwnProperty(d) || (K[d] = new Image, K[d].src = SKIN_URL + d + ".png"), c = 0 != K[d].width && K[d].complete ? K[d] : null) : c = null : c = null;
+                        if (!this.isAgitated && showSkin && ':teams' != N) {
+                            if (-1 != knownNameDict.indexOf(d)) {
+                                if (!K.hasOwnProperty(d)) {
+                                    K[d] = new Image;
+                                    K[d].src = SKIN_URL + d + '.png';
+                                }
+                                if (0 != K[d].width && K[d].complete) {
+                                    c = K[d];
+                                } else {
+                                    c = null;
+                                }
+                            } else {
+                                c = null;
+                            }
+                        } else {
+                            c = null;
+                        }
                         c = (e = c) ? -1 != ib.indexOf(d) : false;
                         b || a.stroke();
                         a.fill();
-                        null == e || c || (a.save(), a.clip(), a.drawImage(e, this.x - this.size, this.y - this.size, 2 * this.size, 2 * this.size), a.restore());
-                        (showColor || 15 < this.size) && !b && (a.strokeStyle = "#000000", a.globalAlpha *= .1, a.stroke());
+                        if (!(null == e || c)) {
+                            a.save();
+                            a.clip();
+                            a.drawImage(e, this.x - this.size, this.y - this.size, 2 * this.size, 2 * this.size);
+                            a.restore();
+                        }
+                        if ((showColor || 15 < this.size) && !b) {
+                            a.strokeStyle = '#000000';
+                            a.globalAlpha *= .1;
+                            a.stroke();
+                        }
                         a.globalAlpha = 1;
-                        null != e && c && a.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
+                        if (null != e && c) {
+                            a.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
+                        }
                         c = -1 != n.indexOf(this);
                         if (0 != this.id) {
                             b = ~~this.y;
@@ -1131,7 +1197,20 @@
                                 a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                                 b += e.height / 2 / d + 4
                             }
-                            showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size) && (null == this.sizeCache && (this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")), c = this.sizeCache, c.setSize(this.getNameSize() / 2), c.setValue(~~(this.size * this.size / 100)), d = Math.ceil(10 * viewZoom) / 10, c.setScale(d), e = c.render(), m = ~~(e.width / d), h = ~~(e.height / d), a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h))
+                            if (showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
+                                if (null == this.sizeCache) {
+                                    this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
+                                }
+                                c = this.sizeCache;
+                                c.setSize(this.getNameSize() / 2);
+                                c.setValue(~~(this.size * this.size / 100));
+                                d = Math.ceil(10 * viewZoom) / 10;
+                                c.setScale(d);
+                                e = c.render();
+                                m = ~~(e.width / d);
+                                h = ~~(e.height / d);
+                                a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
+                            }
                         }
                         a.restore()
                     }
@@ -1148,19 +1227,34 @@
                 _dirty: false,
                 _scale: 1,
                 setSize: function (a) {
-                    this._size != a && (this._size = a, this._dirty = true)
+                    if (this._size != a) {
+                        this._size = a;
+                        this._dirty = true;
+                    }
                 },
                 setScale: function (a) {
-                    this._scale != a && (this._scale = a, this._dirty = true)
+                    if (this._scale != a) {
+                        this._scale = a;
+                        this._dirty = true;
+                    }
                 },
                 setStrokeColor: function (a) {
-                    this._strokeColor != a && (this._strokeColor = a, this._dirty = true)
+                    if (this._strokeColor != a) {
+                        this._strokeColor = a;
+                        this._dirty = true;
+                    }
                 },
                 setValue: function (a) {
-                    a != this._value && (this._value = a, this._dirty = true)
+                    if (a != this._value) {
+                        this._value = a;
+                        this._dirty = true;
+                    }
                 },
                 render: function () {
-                    null == this._canvas && (this._canvas = document.createElement("canvas"), this._ctx = this._canvas.getContext("2d"));
+                    if (null == this._canvas) {
+                        this._canvas = document.createElement("canvas");
+                        this._ctx = this._canvas.getContext("2d");
+                    }
                     if (this._dirty) {
                         this._dirty = false;
                         var a = this._canvas,
@@ -1168,7 +1262,7 @@
                             c = this._value,
                             d = this._scale,
                             e = this._size,
-                            m = e + "px Ubuntu";
+                            m = e + 'px Ubuntu';
                         b.font = m;
                         var h = ~~(.2 * e);
                         a.width = (b.measureText(c).width +
@@ -1234,7 +1328,16 @@
                             }
                         },
                         insert: function (a) {
-                            0 != this.nodes.length ? this.nodes[this.findInsertNode(a)].insert(a) : this.items.length >= c && this.depth < d ? (this.devide(), this.nodes[this.findInsertNode(a)].insert(a)) : this.items.push(a)
+                            if (0 != this.nodes.length) {
+                                this.nodes[this.findInsertNode(a)].insert(a);
+                            } else {
+                                if (this.items.length >= c && this.depth < d) {
+                                    this.devide();
+                                    this.nodes[this.findInsertNode(a)].insert(a);
+                                } else {
+                                    this.items.push(a);
+                                }
+                            }
                         },
                         findInsertNode: function (a) {
                             return a.x < this.x + this.f / 2 ? a.y < this.y + this.h / 2 ? 0 : 2 : a.y < this.y + this.h / 2 ? 1 : 3
@@ -1292,7 +1395,10 @@
             };
             wjQuery(function () {
                 function renderFavicon() {
-                    0 < n.length && (redCell.color = n[0].color, redCell.setName(n[0].name));
+                    if (0 < n.length) {
+                        redCell.color = n[0].color;
+                        redCell.setName(n[0].name);
+                    }
                     ctx.clearRect(0, 0, 32, 32);
                     ctx.save();
                     ctx.translate(16, 16);
