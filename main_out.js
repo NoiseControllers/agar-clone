@@ -242,44 +242,47 @@
     }
 
     function handleWsMessage(msg) {
-        function b() {
-            for (var b = "";;) {
-                var d = msg.getUint16(c, true);
-                c += 2;
-                if (0 == d) break;
-                b += String.fromCharCode(d)
+        function getString() {
+            var text = '',
+                char = 0;
+            while((char = msg.getUint16(offset, true)) != 0){
+                offset += 2;
+                text += String.fromCharCode(char);
             }
-            return b
+            offset += 2;
+            return text;
         }
-        var c = 0,
+        var offset = 0,
             setCustomLB = false;
-        240 == msg.getUint8(c) && (c += 5);
-        switch (msg.getUint8(c++)) {
+        240 == msg.getUint8(offset) && (offset += 5);
+        switch (msg.getUint8(offset++)) {
             case 16: // update nodes
-                ab(msg, c);
+                updateNodes(msg, offset);
                 break;
             case 17: // update position
-                Q = msg.getFloat32(c, true);
-                c += 4;
-                R = msg.getFloat32(c, true);
-                c += 4;
-                S = msg.getFloat32(c, true);
-                c += 4;
+                posX = msg.getFloat32(offset, true);
+                offset += 4;
+                posY = msg.getFloat32(offset, true);
+                offset += 4;
+                posSize = msg.getFloat32(offset, true);
+                offset += 4;
                 break;
             case 20: // clear nodes
                 n = [];
                 G = [];
                 break;
             case 21: // draw line
-                ra = msg.getInt16(c, true);
-                c += 2;
-                sa = msg.getInt16(c, true);
-                c += 2;
-                ta || (ta = true, ca = ra, da = sa);
+                lineX = msg.getInt16(offset, true);
+                offset += 2;
+                lineY = msg.getInt16(offset, true);
+                offset += 2;
+                if (!ta) {
+                    (ta = true, ca = lineX, da = lineY);
+                }
                 break;
             case 32: // add node
-                G.push(msg.getUint32(c, true));
-                c += 4;
+                G.push(msg.getUint32(offset, true));
+                offset += 4;
                 break;
             case 48: // update leaderboard (custom text)
                 setCustomLB = true;
@@ -288,35 +291,38 @@
                 if (!setCustomLB){
                     noRanking = false;
                 }
-                if (null != y) break;
-                var d = msg.getUint32(c, true),
-                    c = c + 4;
+                y = null;
+                var validElements = msg.getUint32(offset, true);
+                offset += 4;
                 leaderBoard = [];
-                for (var e = 0; e < d; ++e) {
-                    var m = msg.getUint32(c, true),
-                        c = c + 4;
+                for (var i = 0; i < validElements; ++i) {
+                    var nodeId = msg.getUint32(offset, true);
+                    offset += 4;
                     leaderBoard.push({
-                        id: m,
-                        name: b()
+                        id: nodeId,
+                        name: getString()
                     })
                 }
                 drawLeaderBoard();
                 break;
             case 50: // update leaderboard (teams)
                 y = [];
-                d = msg.getUint32(c, true);
-                c += 4;
-                for (e = 0; e < d; ++e) y.push(msg.getFloat32(c, true)), c += 4;
+                var validElements = msg.getUint32(offset, true);
+                offset += 4;
+                for (var i = 0; i < validElements; ++i) {
+                    y.push(msg.getFloat32(offset, true));
+                    offset += 4;
+                }
                 drawLeaderBoard();
                 break;
             case 64: // set border
-                ea = msg.getFloat64(c, true), c += 8, fa = msg.getFloat64(c, true), c += 8, ga = msg.getFloat64(c, true), c += 8, ha = msg.getFloat64(c, true), c += 8, Q = (ga + ea) / 2, R = (ha + fa) / 2, S = 1, 0 == n.length && (t = Q, u = R, viewZoom = S)
+                ea = msg.getFloat64(offset, true), offset += 8, fa = msg.getFloat64(offset, true), offset += 8, ga = msg.getFloat64(offset, true), offset += 8, ha = msg.getFloat64(offset, true), offset += 8, posX = (ga + ea) / 2, posY = (ha + fa) / 2, posSize = 1, 0 == n.length && (t = posX, u = posY, viewZoom = posSize)
         }
     }
 
-    function ab(a, b) {
-        H = +new Date;
-        var c = Math.random();
+    function updateNodes(a, b) {
+        timestamp = +new Date;
+        var code = Math.random();
         ua = false;
         var d = a.getUint16(b, true);
         b += 2;
@@ -324,7 +330,7 @@
             var m = A[a.getUint32(b, true)],
                 h = A[a.getUint32(b + 4, true)];
             b += 8;
-            m && h && (h.destory(), h.ox = h.x, h.oy = h.y, h.oSize = h.size, h.nx = m.x, h.ny = m.y, h.nSize = h.size, h.updateTime = H)
+            m && h && (h.destroy(), h.ox = h.x, h.oy = h.y, h.oSize = h.size, h.nx = m.x, h.ny = m.y, h.nSize = h.size, h.updateTime = timestamp)
         }
         for (e = 0;;) {
             d = a.getUint32(b, true);
@@ -360,14 +366,14 @@
             p.nx = m;
             p.ny = h;
             p.nSize = g;
-            p.updateCode = c;
-            p.updateTime = H;
+            p.updateCode = code;
+            p.updateTime = timestamp;
             p.nnn = k;
             q && p.setName(q); - 1 != G.indexOf(d) && -1 == n.indexOf(p) && (document.getElementById("overlays").style.display = "none", n.push(p), 1 == n.length && (t = p.x, u = p.y))
         }
-        c = a.getUint32(b, true);
+        code = a.getUint32(b, true);
         b += 4;
-        for (e = 0; e < c; e++) d = a.getUint32(b, true), b += 4, p = A[d], null != p && p.destory();
+        for (e = 0; e < code; e++) d = a.getUint32(b, true), b += 4, p = A[d], null != p && p.destroy();
         ua && 0 == n.length && showOverlays(false)
     }
 
@@ -431,17 +437,17 @@
     function drawGameScene() {
         var a, b = Date.now();
         ++cb;
-        H = b;
+        timestamp = b;
         if (0 < n.length) {
             bb();
             for (var c =
                 a = 0, d = 0; d < n.length; d++) n[d].updatePos(), a += n[d].x / n.length, c += n[d].y / n.length;
-            Q = a;
-            R = c;
-            S = viewZoom;
+            posX = a;
+            posY = c;
+            posSize = viewZoom;
             t = (t + a) / 2;
             u = (u + c) / 2
-        } else t = (29 * t + Q) / 30, u = (29 * u + R) / 30, viewZoom = (9 * viewZoom + S * viewRange()) / 10;
+        } else t = (29 * t + posX) / 30, u = (29 * u + posY) / 30, viewZoom = (9 * viewZoom + posSize * viewRange()) / 10;
         buildQTree();
         mouseCoordinateChange();
         xa || ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -458,9 +464,9 @@
         for (d = 0; d < nodelist.length; d++) nodelist[d].drawOneCell(ctx);
         //console.log(Cells.length);
         if (ta) {
-            ca = (3 * ca + ra) /
+            ca = (3 * ca + lineX) /
                 4;
-            da = (3 * da + sa) / 4;
+            da = (3 * da + lineY) / 4;
             ctx.save();
             ctx.strokeStyle = "#FFAAAA";
             ctx.lineWidth = 10;
@@ -601,7 +607,7 @@
             X = -1,
             Y = -1,
             cb = 0,
-            H = 0,
+            timestamp = 0,
             F = null,
             ea = 0,
             fa = 0,
@@ -616,15 +622,15 @@
             J = 0,
             showDarkTheme = false,
             showMass = false,
-            Q = t = ~~ ((ea + ga) / 2),
-            R = u = ~~ ((fa + ha) / 2),
-            S = 1,
+            posX = t = ~~ ((ea + ga) / 2),
+            posY = u = ~~ ((fa + ha) / 2),
+            posSize = 1,
             N = "",
             y = null,
             ma = false,
             ta = false,
-            ra = 0,
-            sa = 0,
+            lineX = 0,
+            lineY = 0,
             ca = 0,
             da = 0,
             Ra = 0,
@@ -760,7 +766,7 @@
                 isVirus: false,
                 isAgitated: false,
                 wasSimpleDrawing: true,
-                destory: function() {
+                destroy: function() {
                     var a;
                     for (a = 0; a < nodelist.length; a++)
                         if (nodelist[a] == this) {
@@ -824,7 +830,7 @@
                         10 < b[d] && (b[d] = 10); - 10 > b[d] && (b[d] = -10);
                         b[d] = (e + m + 8 * b[d]) / 10
                     }
-                    for (var h = this, g = this.isVirus ? 0 : (this.id / 1E3 + H / 1E4) % (2 * Math.PI), d = 0; d < c; ++d) {
+                    for (var h = this, g = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), d = 0; d < c; ++d) {
                         var f = a[d].e,
                             e = a[(d - 1 + c) % c].e,
                             m = a[(d + 1) % c].e;
@@ -853,7 +859,7 @@
                 updatePos: function() {
                     if (0 == this.id) return 1;
                     var a;
-                    a = (H - this.updateTime) / 120;
+                    a = (timestamp - this.updateTime) / 120;
                     a = 0 > a ? 0 : 1 < a ? 1 : a;
                     var b = 0 > a ? 0 : 1 < a ? 1 : a;
                     this.getNameSize();
@@ -866,7 +872,11 @@
                     return b
                 },
                 shouldRender: function() {
-                    return 0 == this.id ? true : this.x + this.size + 40 < t - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < u - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > t + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > u + canvasHeight / 2 / viewZoom ? false : true
+                    if (0 == this.id) {
+                        return true
+                    } else {
+                        return this.x + this.size + 40 < t - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < u - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > t + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > u + canvasHeight / 2 / viewZoom ? false : true
+                    }
                 },
                 drawOneCell: function(a) {
                     if (this.shouldRender()) {
@@ -876,7 +886,7 @@
                             for (var c = 0; c < this.points.length; c++) this.points[c].e = this.size;
                         this.wasSimpleDrawing = b;
                         a.save();
-                        this.drawTime = H;
+                        this.drawTime = timestamp;
                         c = this.updatePos();
                         this.destroyed && (a.globalAlpha *= 1 - c);
                         a.lineWidth = 10;
