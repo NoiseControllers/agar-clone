@@ -186,7 +186,9 @@
             ws = null
         }
         var c = CONNECTION_URL;
-        /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/.test(c) && 5 != +c.split(".")[0] && (wsUrl = "ws://" + c);
+        if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/.test(c) && 5 != +c.split(".")[0]) {
+             wsUrl = "ws://" + c;
+        }
         localProtocolHttps && (wsUrl = wsUrl.split(":"), wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3));
         G = [];
         n = [];
@@ -363,13 +365,13 @@
             var flags = view.getUint8(offset++),
                 flagVirus = !! (flags & 1),
                 flagAgitated = !! (flags & 16);
-            if (flags & 2) {
+            if ((flags & 2) > 0) {
                 offset += 4;
             }
-            if (flags & 4) {
+            if ((flags & 4) > 0) {
                 offset += 8;
             }
-            if (flags & 8) {
+            if ((flags & 8) > 0) {
                 offset += 16;
             }
             var char, name = '';
@@ -736,30 +738,30 @@
             var response = null;
             wjQuery.ajax({
                 type: "POST",
-                  dataType: "json",
-                  url: "checkdir.php", //Relative or absolute path to response.php file
-                  data: data,
-                  success: function(data) {
-                //alert(data["names"]);
-                response = JSON.parse(data["names"]);
-            }
+                dataType: "json",
+                url: "checkdir.php", //Relative or absolute path to response.php file
+                data: data,
+                success: function (data) {
+                    //alert(data["names"]);
+                    response = JSON.parse(data["names"]);
+                }
             });
 
 
-            var interval1Id = setInterval(function(){
+            var interval1Id = setInterval(function () {
                 //console.log("logging every 5 seconds");
                 //console.log(Aa);
 
-            wjQuery.ajax({
-                type: "POST",
-                  dataType: "json",
-                  url: "checkdir.php", //Relative or absolute path to response.php file
-                  data: data,
-                  success: function(data) {
-                //alert(data["names"]);
-                response = JSON.parse(data["names"]);
-            }
-            });
+                wjQuery.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: "checkdir.php", //Relative or absolute path to response.php file
+                    data: data,
+                    success: function (data) {
+                        //alert(data["names"]);
+                        response = JSON.parse(data["names"]);
+                    }
+                });
                 //console.log(response);
                 for (var i = 0; i < response.length; i++) {
                     //console.log(response[insert]);
