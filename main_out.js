@@ -1,9 +1,9 @@
-(function(wHandle, wjQuery) {
+(function (wHandle, wjQuery) {
     /**
      * Enter url in the following format: HOST : PORT
      *
      * Example: 127.0.0.1:443
-     * 
+     *
      */
     var CONNECTION_URL = "162.243.157.40:443";
     /**
@@ -18,7 +18,7 @@
         setInterval(getServerList, 18E4);
         Canvas = nCanvas = document.getElementById("canvas");
         ctx = Canvas.getContext("2d");
-        Canvas.onmousedown = function(event) {
+        Canvas.onmousedown = function (event) {
             if (isTouchStart) {
                 var xOffset = event.clientX - (5 + canvasWidth / 5 / 2),
                     yOffset = event.clientY - (5 + canvasWidth / 5 / 2);
@@ -33,12 +33,13 @@
             mouseCoordinateChange();
             sendMouseMove()
         };
-        Canvas.onmousemove = function(event) {
+        Canvas.onmousemove = function (event) {
             rawMouseX = event.clientX;
             rawMouseY = event.clientY;
             mouseCoordinateChange()
         };
-        Canvas.onmouseup = function() {};
+        Canvas.onmouseup = function () {
+        };
         if (/firefox/i.test(navigator.userAgent)) {
             document.addEventListener("DOMMouseScroll", handleWheel, false);
         } else {
@@ -47,18 +48,18 @@
         var spacePressed = false,
             qPressed = false,
             wPressed = false;
-        wHandle.onkeydown = function(event) {
+        wHandle.onkeydown = function (event) {
             32 != event.keyCode || spacePressed || (sendMouseMove(), sendUint8(17), spacePressed = true);//split
             81 != event.keyCode || qPressed || (sendUint8(18), qPressed = true);//key q pressed
             87 != event.keyCode || wPressed || (sendMouseMove(), sendUint8(21), wPressed = true);//eject mass
             27 == event.keyCode && showOverlays(true)
         };
-        wHandle.onkeyup = function(event) {
+        wHandle.onkeyup = function (event) {
             32 == event.keyCode && (spacePressed = false);
             87 == event.keyCode && (wPressed = false);
             81 == event.keyCode && qPressed && (sendUint8(19), qPressed = false)
         };
-        wHandle.onblur = function() {
+        wHandle.onblur = function () {
             sendUint8(19);
             wPressed = qPressed = spacePressed = false
         };
@@ -117,12 +118,12 @@
     }
 
     function getServerList() {
-        null == $ && ($ = {}, wjQuery("#region").children().each(function() {
+        null == $ && ($ = {}, wjQuery("#region").children().each(function () {
             var a = wjQuery(this),
                 b = a.val();
             b && ($[b] = a.text())
         }));
-        wjQuery.get("info.php", function(a) {
+        wjQuery.get("info.php", function (a) {
             var b = {}, c;
             for (c in a.regions) {
                 var d = c.split(":")[0];
@@ -157,10 +158,10 @@
     function attemptConnection() {
         console.log("Find " + w + N);
         wjQuery.ajax("main.php", {
-            error: function() {
+            error: function () {
                 setTimeout(attemptConnection, 1E3)
             },
-            success: function(a) {
+            success: function (a) {
                 wsConnect("ws://" + CONNECTION_URL)
             },
             dataType: "text",
@@ -182,12 +183,13 @@
             ws.onclose = null;
             try {
                 ws.close()
-            } catch (b) {}
+            } catch (b) {
+            }
             ws = null
         }
         var c = CONNECTION_URL;
         if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/.test(c) && 5 != +c.split(".")[0]) {
-             wsUrl = "ws://" + c;
+            wsUrl = "ws://" + c;
         }
         localProtocolHttps && (wsUrl = wsUrl.split(":"), wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3));
         G = [];
@@ -204,7 +206,7 @@
         ws.onopen = onWsOpen;
         ws.onmessage = onWsMessage;
         ws.onclose = onWsClose;
-        ws.onerror = function() {
+        ws.onerror = function () {
             console.log("socket error")
         }
     }
@@ -247,13 +249,14 @@
         function getString() {
             var text = '',
                 char = 0;
-            while((char = msg.getUint16(offset, true)) != 0){
+            while ((char = msg.getUint16(offset, true)) != 0) {
                 offset += 2;
                 text += String.fromCharCode(char);
             }
             offset += 2;
             return text;
         }
+
         var offset = 0,
             setCustomLB = false;
         240 == msg.getUint8(offset) && (offset += 5);
@@ -290,7 +293,7 @@
                 setCustomLB = true;
                 noRanking = true;
             case 49: // update leaderboard (ffa)
-                if (!setCustomLB){
+                if (!setCustomLB) {
                     noRanking = false;
                 }
                 y = null;
@@ -332,7 +335,7 @@
             var killer = A[view.getUint32(offset, true)],
                 killedNode = A[view.getUint32(offset + 4, true)];
             offset += 8;
-            if(killer && killedNode){
+            if (killer && killedNode) {
                 killedNode.destroy();
                 killedNode.ox = killedNode.x;
                 killedNode.oy = killedNode.y;
@@ -363,8 +366,8 @@
             }
             color = '#' + color;
             var flags = view.getUint8(offset++),
-                flagVirus = !! (flags & 1),
-                flagAgitated = !! (flags & 16);
+                flagVirus = !!(flags & 1),
+                flagAgitated = !!(flags & 16);
             if ((flags & 2) > 0) {
                 offset += 4;
             }
@@ -494,7 +497,7 @@
         mouseCoordinateChange();
         xa || ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         xa ? (ctx.fillStyle = showDarkTheme ? "#111111" : "#F2FBFF", ctx.globalAlpha = .05, ctx.fillRect(0, 0, canvasWidth, canvasHeight), ctx.globalAlpha = 1) : drawGrid();
-        nodelist.sort(function(a, b) {
+        nodelist.sort(function (a, b) {
             return a.size == b.size ? a.id - b.id : a.size - b.size
         });
         ctx.save();
@@ -526,7 +529,8 @@
         0 != J && (null == ja && (ja = new ka(24, "#FFFFFF")), ja.setValue("Score: " + ~~(J / 100)), c = ja.render(), a = c.width, ctx.globalAlpha = .2, ctx.fillStyle = "#000000", ctx.fillRect(10, canvasHeight - 10 - 24 - 10, a + 10, 34), ctx.globalAlpha = 1, ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5));
         drawSplitIcon();
         b = Date.now() - b;
-        b > 1E3 / 60 ? z -= .01 : b < 1E3 / 65 && (z += .01);.4 > z && (z = .4);
+        b > 1E3 / 60 ? z -= .01 : b < 1E3 / 65 && (z += .01);
+        .4 > z && (z = .4);
         1 < z && (z = 1)
     }
 
@@ -626,7 +630,7 @@
     function ka(usize, ucolor, ustroke, ustrokecolor) {
         usize && (this._size = usize);
         ucolor && (this._color = ucolor);
-        this._stroke = !! ustroke;
+        this._stroke = !!ustroke;
         ustrokecolor && (this._strokeColor = ustrokecolor)
     }
 
@@ -664,8 +668,8 @@
             J = 0,
             showDarkTheme = false,
             showMass = false,
-            posX = t = ~~ ((ea + ga) / 2),
-            posY = u = ~~ ((fa + ha) / 2),
+            posX = t = ~~((ea + ga) / 2),
+            posY = u = ~~((fa + ha) / 2),
             posSize = 1,
             N = "",
             y = null,
@@ -687,54 +691,57 @@
         if ("undefined" == typeof console || "undefined" == typeof DataView || "undefined" == typeof WebSocket || null == Sa || null == Sa.getContext || null == wHandle.localStorage) alert("You browser does not support this game, we recommend you to use Firefox to play this");
         else {
             var $ = null;
-            wHandle.setNick = function(arg) {
+            wHandle.setNick = function (arg) {
                 hideOverlays();
                 F = arg;
                 Ka();
                 J = 0
             };
             wHandle.setRegion = setRegion;
-            wHandle.setSkins = function(arg) {
+            wHandle.setSkins = function (arg) {
                 showSkin = arg
             };
-            wHandle.setNames = function(arg) {
+            wHandle.setNames = function (arg) {
                 showName = arg
             };
-            wHandle.setDarkTheme = function(arg) {
+            wHandle.setDarkTheme = function (arg) {
                 showDarkTheme = arg
             };
-            wHandle.setColors = function(arg) {
+            wHandle.setColors = function (arg) {
                 showColor = arg
             };
-            wHandle.setShowMass = function(arg) {
+            wHandle.setShowMass = function (arg) {
                 showMass = arg
             };
-            wHandle.spectate = function() {
+            wHandle.spectate = function () {
                 F = null;
                 sendUint8(1);
                 hideOverlays()
             };
-            wHandle.setGameMode = function(arg) {
+            wHandle.setGameMode = function (arg) {
                 arg != N && (N = arg, showConnecting())
             };
-            wHandle.setAcid = function(arg) {
+            wHandle.setAcid = function (arg) {
                 xa = arg
             };
             null != wHandle.localStorage && (null == wHandle.localStorage.AB8 && (wHandle.localStorage.AB8 = 0 + ~~(100 * Math.random())), Ra = +wHandle.localStorage.AB8, wHandle.ABGroup = Ra);
-            wjQuery.get(localProtocol + "//gc.agar.io", function(a) {
+            wjQuery.get(localProtocol + "//gc.agar.io", function (a) {
                 var b = a.split(" ");
                 a = b[0];
-                b = b[1] || ""; - 1 == "DE IL PL HU BR AT UA".split(" ").indexOf(a) && knownNameDict.push("nazi"); - 1 == ["UA"].indexOf(a) && knownNameDict.push("ussr");
+                b = b[1] || "";
+                -1 == "DE IL PL HU BR AT UA".split(" ").indexOf(a) && knownNameDict.push("nazi");
+                -1 == ["UA"].indexOf(a) && knownNameDict.push("ussr");
                 T.hasOwnProperty(a) && ("string" == typeof T[a] ? w || setRegion(T[a]) : T[a].hasOwnProperty(b) && (w || setRegion(T[a][b])))
             }, "text");
-            setTimeout(function() {}, 3E5);
+            setTimeout(function () {
+            }, 3E5);
             var T = {
                 ZW: "EU-London"
             };
             wHandle.connect = wsConnect;
 
             //This part is for loading custon skins
-            var data = {"action":"test"};
+            var data = {"action": "test"};
             var response = null;
             wjQuery.ajax({
                 type: "POST",
@@ -765,13 +772,12 @@
                 //console.log(response);
                 for (var i = 0; i < response.length; i++) {
                     //console.log(response[insert]);
-                if (-1 == knownNameDict.indexOf(response[i])) {
-                knownNameDict.push(response[i]);
-                //console.log("Add:"+response[i]);
+                    if (-1 == knownNameDict.indexOf(response[i])) {
+                        knownNameDict.push(response[i]);
+                        //console.log("Add:"+response[i]);
+                    }
                 }
-            }
-            },15000);
-
+            }, 15000);
 
 
             var delay = 500,
@@ -782,9 +788,9 @@
                 ja = null,
                 K = {},
                 knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
-		        hb = ["8", "nasa"],
+                hb = ["8", "nasa"],
                 ib = ["_canvas'blob"];
-                Cell.prototype = {
+            Cell.prototype = {
                 id: 0,
                 points: null,
                 pointsAcc: null,
@@ -808,7 +814,7 @@
                 isVirus: false,
                 isAgitated: false,
                 wasSimpleDrawing: true,
-                destroy: function() {
+                destroy: function () {
                     var a;
                     for (a = 0; a < nodelist.length; a++)
                         if (nodelist[a] == this) {
@@ -816,20 +822,22 @@
                             break
                         }
                     delete A[this.id];
-                    a = n.indexOf(this); - 1 != a && (ua = true, n.splice(a, 1));
-                    a = G.indexOf(this.id); - 1 != a && G.splice(a, 1);
+                    a = n.indexOf(this);
+                    -1 != a && (ua = true, n.splice(a, 1));
+                    a = G.indexOf(this.id);
+                    -1 != a && G.splice(a, 1);
                     this.destroyed = true;
                     Cells.push(this)
                 },
-                getNameSize: function() {
+                getNameSize: function () {
                     return Math.max(~~(.3 * this.size), 24)
                 },
-                setName: function(a) {
+                setName: function (a) {
                     if (this.name = a) null == this.nameCache ? this.nameCache = new ka(this.getNameSize(), "#FFFFFF", true, "#000000") : this.nameCache.setSize(this.getNameSize()), this.nameCache.setValue(this.name)
                 },
-                createPoints: function() {
+                createPoints: function () {
                     for (var a = this.getNumPoints(); this.points.length > a;) {
-                        var b = ~~ (Math.random() * this.points.length);
+                        var b = ~~(Math.random() * this.points.length);
                         this.points.splice(b, 1);
                         this.pointsAcc.splice(b, 1)
                     }
@@ -840,7 +848,7 @@
                         y: this.y
                     }), this.pointsAcc.push(Math.random() - .5));
                     for (; this.points.length < a;) {
-                        var b = ~~ (Math.random() * this.points.length),
+                        var b = ~~(Math.random() * this.points.length),
                             c = this.points[b];
                         this.points.splice(b, 0, {
                             S: this,
@@ -851,7 +859,7 @@
                         this.pointsAcc.splice(b, 0, this.pointsAcc[b])
                     }
                 },
-                getNumPoints: function() {
+                getNumPoints: function () {
                     if (0 == this.id) return 16;
                     var a = 10;
                     20 > this.size && (a = 0);
@@ -860,16 +868,17 @@
                     this.isVirus || (b *= viewZoom);
                     b *= z;
                     this.nnn & 32 && (b *= .25);
-                    return~~ Math.max(b, a)
+                    return ~~Math.max(b, a)
                 },
-                movePoints: function() {
+                movePoints: function () {
                     this.createPoints();
                     for (var a = this.points, b = this.pointsAcc, c = a.length, d = 0; d < c; ++d) {
                         var e = b[(d - 1 + c) % c],
                             m = b[(d + 1) % c];
                         b[d] += (Math.random() - .5) * (this.isAgitated ? 3 : 1);
                         b[d] *= .7;
-                        10 < b[d] && (b[d] = 10); - 10 > b[d] && (b[d] = -10);
+                        10 < b[d] && (b[d] = 10);
+                        -10 > b[d] && (b[d] = -10);
                         b[d] = (e + m + 8 * b[d]) / 10
                     }
                     for (var h = this, g = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), d = 0; d < c; ++d) {
@@ -881,9 +890,9 @@
                                 n = a[d].x,
                                 q = a[d].y;
                             qTree.retrieve2(n -
-                                5, q - 5, 10, 10, function(a) {
-                                    a.S != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y) && (l = true)
-                                });
+                                5, q - 5, 10, 10, function (a) {
+                                a.S != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y) && (l = true)
+                            });
                             !l && (a[d].x < ea || a[d].y < fa || a[d].x > ga || a[d].y > ha) && (l = true);
                             l && (0 < b[d] && (b[d] = 0), b[d] -= 1)
                         }
@@ -898,7 +907,7 @@
                         a[d].y = this.y + Math.sin(e * d + g) * m
                     }
                 },
-                updatePos: function() {
+                updatePos: function () {
                     if (0 == this.id) return 1;
                     var a;
                     a = (timestamp - this.updateTime) / 120;
@@ -906,21 +915,22 @@
                     var b = 0 > a ? 0 : 1 < a ? 1 : a;
                     this.getNameSize();
                     if (this.destroyed && 1 <= b) {
-                        var c = Cells.indexOf(this); - 1 != c && Cells.splice(c, 1)
+                        var c = Cells.indexOf(this);
+                        -1 != c && Cells.splice(c, 1)
                     }
                     this.x = a * (this.nx - this.ox) + this.ox;
                     this.y = a * (this.ny - this.oy) + this.oy;
                     this.size = b * (this.nSize - this.oSize) + this.oSize;
                     return b
                 },
-                shouldRender: function() {
+                shouldRender: function () {
                     if (0 == this.id) {
                         return true
                     } else {
                         return this.x + this.size + 40 < t - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < u - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > t + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > u + canvasHeight / 2 / viewZoom ? false : true
                     }
                 },
-                drawOneCell: function(a) {
+                drawOneCell: function (a) {
                     if (this.shouldRender()) {
                         var b = 0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom;
                         5 > this.getNumPoints() && (b = true);
@@ -966,12 +976,12 @@
                                 d = Math.ceil(10 * viewZoom) / 10;
                                 e.setScale(d);
                                 var e = e.render(),
-                                    m = ~~ (e.width / d),
-                                    h = ~~ (e.height / d);
+                                    m = ~~(e.width / d),
+                                    h = ~~(e.height / d);
                                 a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                                 b += e.height / 2 / d + 4
                             }
-                            showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size) && (null == this.sizeCache && (this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")), c = this.sizeCache, c.setSize(this.getNameSize() / 2), c.setValue(~~(this.size * this.size / 100)), d = Math.ceil(10 * viewZoom) / 10, c.setScale(d), e = c.render(), m = ~~ (e.width / d), h = ~~ (e.height / d), a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h))
+                            showMass && (c || 0 == n.length && (!this.isVirus || this.isAgitated) && 20 < this.size) && (null == this.sizeCache && (this.sizeCache = new ka(this.getNameSize() / 2, "#FFFFFF", true, "#000000")), c = this.sizeCache, c.setSize(this.getNameSize() / 2), c.setValue(~~(this.size * this.size / 100)), d = Math.ceil(10 * viewZoom) / 10, c.setScale(d), e = c.render(), m = ~~(e.width / d), h = ~~(e.height / d), a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h))
                         }
                         a.restore()
                     }
@@ -987,19 +997,19 @@
                 _ctx: null,
                 _dirty: false,
                 _scale: 1,
-                setSize: function(a) {
+                setSize: function (a) {
                     this._size != a && (this._size = a, this._dirty = true)
                 },
-                setScale: function(a) {
+                setScale: function (a) {
                     this._scale != a && (this._scale = a, this._dirty = true)
                 },
-                setStrokeColor: function(a) {
+                setStrokeColor: function (a) {
                     this._strokeColor != a && (this._strokeColor = a, this._dirty = true)
                 },
-                setValue: function(a) {
+                setValue: function (a) {
                     a != this._value && (this._value = a, this._dirty = true)
                 },
-                render: function() {
+                render: function () {
                     null == this._canvas && (this._canvas = document.createElement("canvas"), this._ctx = this._canvas.getContext("2d"));
                     if (this._dirty) {
                         this._dirty = false;
@@ -1010,7 +1020,7 @@
                             e = this._size,
                             m = e + "px Ubuntu";
                         b.font = m;
-                        var h = ~~ (.2 * e);
+                        var h = ~~(.2 * e);
                         a.width = (b.measureText(c).width +
                             6) * d;
                         a.height = (e + h) * d;
@@ -1026,11 +1036,11 @@
                     return this._canvas
                 }
             };
-            Date.now || (Date.now = function() {
+            Date.now || (Date.now = function () {
                 return (new Date).getTime()
             });
             var Quad = {
-                init: function(args) {
+                init: function (args) {
                     function Node(x, y, w, h, depth) {
                         this.x = x;
                         this.y = y;
@@ -1040,6 +1050,7 @@
                         this.items = [];
                         this.nodes = []
                     }
+
                     var c = args.maxChildren || 2,
                         d = args.maxDepth || 4;
                     Node.prototype = {
@@ -1050,38 +1061,38 @@
                         depth: 0,
                         items: null,
                         nodes: null,
-                        exists: function(selector) {
+                        exists: function (selector) {
                             for (var i = 0; i < this.items.length; ++i) {
                                 var item = this.items[i];
                                 if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.f && item.y < selector.y + selector.getNameSize) return true
                             }
                             if (0 != this.nodes.length) {
                                 var self = this;
-                                return this.findOverlappingNodes(selector, function(dir) {
+                                return this.findOverlappingNodes(selector, function (dir) {
                                     return self.nodes[dir].exists(selector)
                                 })
                             }
                             return false;
                         },
-                        retrieve: function(item, callback) {
+                        retrieve: function (item, callback) {
                             for (var i = 0; i < this.items.length; ++i) callback(this.items[i]);
                             if (0 != this.nodes.length) {
                                 var self = this;
-                                this.findOverlappingNodes(item, function(dir) {
+                                this.findOverlappingNodes(item, function (dir) {
                                     self.nodes[dir].retrieve(item, callback)
                                 })
                             }
                         },
-                        insert: function(a) {
+                        insert: function (a) {
                             0 != this.nodes.length ? this.nodes[this.findInsertNode(a)].insert(a) : this.items.length >= c && this.depth < d ? (this.devide(), this.nodes[this.findInsertNode(a)].insert(a)) : this.items.push(a)
                         },
-                        findInsertNode: function(a) {
+                        findInsertNode: function (a) {
                             return a.x < this.x + this.f / 2 ? a.y < this.y + this.h / 2 ? 0 : 2 : a.y < this.y + this.h / 2 ? 1 : 3
                         },
-                        findOverlappingNodes: function(a, b) {
+                        findOverlappingNodes: function (a, b) {
                             return a.x < this.x + this.f / 2 && (a.y < this.y + this.h / 2 && b(0) || a.y >= this.y + this.h / 2 && b(2)) || a.x >= this.x + this.f / 2 && (a.y < this.y + this.h / 2 && b(1) || a.y >= this.y + this.h / 2 && b(3)) ? true : false
                         },
-                        devide: function() {
+                        devide: function () {
                             var a = this.depth + 1,
                                 c = this.f / 2,
                                 d = this.h / 2;
@@ -1093,7 +1104,7 @@
                             this.items = [];
                             for (c = 0; c < a.length; c++) this.insert(a[c])
                         },
-                        clear: function() {
+                        clear: function () {
                             for (var a = 0; a < this.nodes.length; a++) this.nodes[a].clear();
                             this.items.length = 0;
                             this.nodes.length = 0
@@ -1107,29 +1118,29 @@
                     };
                     return {
                         root: new Node(args.minX, args.minY, args.maxX - args.minX, args.maxY - args.minY, 0),
-                        insert: function(a) {
+                        insert: function (a) {
                             this.root.insert(a)
                         },
-                        retrieve: function(a, b) {
+                        retrieve: function (a, b) {
                             this.root.retrieve(a, b)
                         },
-                        retrieve2: function(a, b, c, d, callback) {
+                        retrieve2: function (a, b, c, d, callback) {
                             internalSelector.x = a;
                             internalSelector.y = b;
                             internalSelector.f = c;
                             internalSelector.getNameSize = d;
                             this.root.retrieve(internalSelector, callback)
                         },
-                        exists: function(a) {
+                        exists: function (a) {
                             return this.root.exists(a)
                         },
-                        clear: function() {
+                        clear: function () {
                             this.root.clear()
                         }
                     }
                 }
             };
-            wjQuery(function() {
+            wjQuery(function () {
                 function renderFavicon() {
                     0 < n.length && (redCell.color = n[0].color, redCell.setName(n[0].name));
                     ctx.clearRect(0, 0, 32, 32);
@@ -1143,6 +1154,7 @@
                     oldfavicon.setAttribute("href", Canvas.toDataURL("image/png"));
                     favicon.parentNode.replaceChild(oldfavicon, favicon)
                 }
+
                 var redCell = new Cell(0, 0, 0, 32, "#ED1C24", ""),
                     Canvas = document.createElement("canvas");
                 Canvas.width = 32;
