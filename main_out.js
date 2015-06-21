@@ -1097,42 +1097,42 @@
                         return this.x + this.size + 40 < nodeX - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < nodeY - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > nodeX + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > nodeY + canvasHeight / 2 / viewZoom ? false : true
                     }
                 },
-                drawOneCell: function (a) {
+                drawOneCell: function (ctx) {
                     if (this.shouldRender()) {
                         var b = 0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom;
                         5 > this.getNumPoints() && (b = true);
                         if (this.wasSimpleDrawing && !b)
                             for (var c = 0; c < this.points.length; c++) this.points[c].size = this.size;
                         this.wasSimpleDrawing = b;
-                        a.save();
+                        ctx.save();
                         this.drawTime = timestamp;
                         c = this.updatePos();
-                        this.destroyed && (a.globalAlpha *= 1 - c);
-                        a.lineWidth = 10;
-                        a.lineCap = "round";
-                        a.lineJoin = this.isVirus ? "miter" : "round";
+                        this.destroyed && (ctx.globalAlpha *= 1 - c);
+                        ctx.lineWidth = 10;
+                        ctx.lineCap = "round";
+                        ctx.lineJoin = this.isVirus ? "miter" : "round";
                         if (showColor) {
-                            a.fillStyle = "#FFFFFF";
-                            a.strokeStyle = "#AAAAAA";
+                            ctx.fillStyle = "#FFFFFF";
+                            ctx.strokeStyle = "#AAAAAA";
                         } else {
-                            a.fillStyle = this.color;
-                            a.strokeStyle = this.color;
+                            ctx.fillStyle = this.color;
+                            ctx.strokeStyle = this.color;
                         }
                         if (b) {
-                            a.beginPath();
-                            a.arc(this.x, this.y, this.size, 0, 2 * Math.PI, false);
+                            ctx.beginPath();
+                            ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI, false);
                         }
                         else {
                             this.movePoints();
-                            a.beginPath();
+                            ctx.beginPath();
                             var d = this.getNumPoints();
-                            a.moveTo(this.points[0].x, this.points[0].y);
+                            ctx.moveTo(this.points[0].x, this.points[0].y);
                             for (c = 1; c <= d; ++c) {
                                 var e = c % d;
-                                a.lineTo(this.points[e].x, this.points[e].y)
+                                ctx.lineTo(this.points[e].x, this.points[e].y)
                             }
                         }
-                        a.closePath();
+                        ctx.closePath();
                         d = this.name.toLowerCase();
                         if (!this.isAgitated && showSkin && ':teams' != N) {
                             if (-1 != knownNameDict.indexOf(d)) {
@@ -1152,22 +1152,22 @@
                             c = null;
                         }
                         c = (e = c) ? -1 != ib.indexOf(d) : false;
-                        b || a.stroke();
-                        a.fill();
+                        b || ctx.stroke();
+                        ctx.fill();
                         if (!(null == e || c)) {
-                            a.save();
-                            a.clip();
-                            a.drawImage(e, this.x - this.size, this.y - this.size, 2 * this.size, 2 * this.size);
-                            a.restore();
+                            ctx.save();
+                            ctx.clip();
+                            ctx.drawImage(e, this.x - this.size, this.y - this.size, 2 * this.size, 2 * this.size);
+                            ctx.restore();
                         }
                         if ((showColor || 15 < this.size) && !b) {
-                            a.strokeStyle = '#000000';
-                            a.globalAlpha *= .1;
-                            a.stroke();
+                            ctx.strokeStyle = '#000000';
+                            ctx.globalAlpha *= .1;
+                            ctx.stroke();
                         }
-                        a.globalAlpha = 1;
+                        ctx.globalAlpha = 1;
                         if (null != e && c) {
-                            a.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
+                            ctx.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
                         }
                         c = -1 != playerCells.indexOf(this);
                         if (0 != this.id) {
@@ -1181,7 +1181,7 @@
                                 var e = e.render(),
                                     m = ~~(e.width / d),
                                     h = ~~(e.height / d);
-                                a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
+                                ctx.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                                 b += e.height / 2 / d + 4
                             }
                             if (showMass && (c || 0 == playerCells.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
@@ -1196,10 +1196,10 @@
                                 e = c.render();
                                 m = ~~(e.width / d);
                                 h = ~~(e.height / d);
-                                a.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
+                                ctx.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                             }
                         }
-                        a.restore()
+                        ctx.restore()
                     }
                 }
             };
