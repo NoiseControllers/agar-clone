@@ -1135,6 +1135,14 @@
                         }
                         ctx.closePath();
                         var skinName = this.name.toLowerCase();
+                        if (skinName.indexOf('[')!=-1)
+                        {
+                            var clanStart = skinName.indexOf('[');
+                            var clanEnd = skinName.indexOf(']');
+                            skinName = skinName.slice(clanStart+1,clanEnd);
+                            console.log(skinName);
+                        }
+
                         if (!this.isAgitated && showSkin && ':teams' != gameMode) {
                             if (-1 != knownNameDict.indexOf(skinName)) {
                                 if (!skins.hasOwnProperty(skinName)) {
