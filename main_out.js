@@ -24,7 +24,7 @@
                     yOffset = event.clientY - (5 + canvasWidth / 5 / 2);
                 if (Math.sqrt(xOffset * xOffset + yOffset * yOffset) <= canvasWidth / 5 / 2) {
                     sendMouseMove();
-                    sendUint8(17);
+                    sendUint8(17); //split
                     return
                 }
             }
@@ -214,7 +214,7 @@
     }
 
     function attemptConnection() {
-        console.log("Find " + w + N);
+        console.log("Find " + w + gameMode);
         wjQuery.ajax("main.php", {
             error: function () {
                 setTimeout(attemptConnection, 1E3)
@@ -226,7 +226,7 @@
             method: "POST",
             cache: false,
             crossDomain: true,
-            data: w + N || "?"
+            data: w + gameMode || "?"
         })
     }
 
@@ -258,7 +258,7 @@
         }
         nodesOnScreen = [];
         playerCells = [];
-        A = {};
+        nodes = {};
         nodelist = [];
         Cells = [];
         leaderBoard = [];
@@ -271,7 +271,7 @@
         ws.onmessage = onWsMessage;
         ws.onclose = onWsClose;
         ws.onerror = function () {
-            console.log("socket error")
+            console.log("socket error");
         }
     }
 
@@ -414,8 +414,8 @@
         var queueLength = view.getUint16(offset, true);
         offset += 2;
         for (var i = 0; i < queueLength; ++i) {
-            var killer = A[view.getUint32(offset, true)],
-                killedNode = A[view.getUint32(offset + 4, true)];
+            var killer = nodes[view.getUint32(offset, true)],
+                killedNode = nodes[view.getUint32(offset + 4, true)];
             offset += 8;
             if (killer && killedNode) {
                 killedNode.destroy();
@@ -455,8 +455,8 @@
                 name += String.fromCharCode(char)
             }
             var node = null;
-            if (A.hasOwnProperty(nodeId)) {
-                node = A[nodeId];
+            if (nodes.hasOwnProperty(nodeId)) {
+                node = nodes[nodeId];
                 node.updatePos();
                 node.ox = node.x;
                 node.oy = node.y;
@@ -465,7 +465,7 @@
             } else {
                 node = new Cell(nodeId, posX, posY, size, color, name);
                 nodelist.push(node);
-                A[nodeId] = node;
+                nodes[nodeId] = node;
                 node.ka = posX;
                 node.la = posY;
             }
@@ -476,7 +476,7 @@
             node.nSize = size;
             node.updateCode = code;
             node.updateTime = timestamp;
-            node.nnn = flags;
+            node.flag = flags;
             name && node.setName(name);
             if (-1 != nodesOnScreen.indexOf(nodeId) && -1 == playerCells.indexOf(node)) {
                 document.getElementById("overlays").style.display = "none";
@@ -492,7 +492,7 @@
         for (var i = 0; i < queueLength; i++) {
             var nodeId = view.getUint32(offset, true);
             offset += 4;
-            node = A[nodeId];
+            node = nodes[nodeId];
             null != node && node.destroy();
         }
         ua && 0 == playerCells.length && showOverlays(false)
@@ -779,7 +779,7 @@
             nodeY = 0,
             nodesOnScreen = [],
             playerCells = [],
-            A = {}, nodelist = [],
+            nodes = {}, nodelist = [],
             Cells = [],
             leaderBoard = [],
             rawMouseX = 0,
@@ -805,7 +805,7 @@
             posX = nodeX = ~~((leftPos + rightPos) / 2),
             posY = nodeY = ~~((topPos + bottomPos) / 2),
             posSize = 1,
-            N = "",
+            gameMode = "",
             teamScores = null,
             ma = false,
             ta = false,
@@ -821,8 +821,8 @@
             splitIcon = new Image,
             noRanking = false;
         splitIcon.src = "http://agar.io/img/split.png";
-        var Sa = document.createElement("canvas");
-        if ("undefined" == typeof console || "undefined" == typeof DataView || "undefined" == typeof WebSocket || null == Sa || null == Sa.getContext || null == wHandle.localStorage) alert("You browser does not support this game, we recommend you to use Firefox to play this");
+        var wCanvas = document.createElement("canvas");
+        if ("undefined" == typeof console || "undefined" == typeof DataView || "undefined" == typeof WebSocket || null == wCanvas || null == wCanvas.getContext || null == wHandle.localStorage) alert("You browser does not support this game, we recommend you to use Firefox to play this");
         else {
             var $ = null;
             wHandle.setNick = function (arg) {
@@ -853,8 +853,8 @@
                 hideOverlays()
             };
             wHandle.setGameMode = function (arg) {
-                if (arg != N) {
-                    N = arg;
+                if (arg != gameMode) {
+                    gameMode = arg;
                     showConnecting();
                 }
             };
@@ -929,9 +929,9 @@
                 Canvas = null,
                 z = 1,
                 scoreText = null,
-                K = {},
+                skins = {},
                 knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
-                hb = ["8", "nasa"],
+                knownNameDict_noDisp = ["8", "nasa"],
                 ib = ["_canvas'blob"];
             Cell.prototype = {
                 id: 0,
@@ -949,7 +949,7 @@
                 nx: 0,
                 ny: 0,
                 nSize: 0,
-                nnn: 0,
+                flag: 0, //what does this mean
                 updateTime: 0,
                 updateCode: 0,
                 drawTime: 0,
@@ -958,21 +958,21 @@
                 isAgitated: false,
                 wasSimpleDrawing: true,
                 destroy: function () {
-                    var a;
-                    for (a = 0; a < nodelist.length; a++)
-                        if (nodelist[a] == this) {
-                            nodelist.splice(a, 1);
+                    var tmp;
+                    for (tmp = 0; tmp < nodelist.length; tmp++)
+                        if (nodelist[tmp] == this) {
+                            nodelist.splice(tmp, 1);
                             break
                         }
-                    delete A[this.id];
-                    a = playerCells.indexOf(this);
-                    if (-1 != a) {
+                    delete nodes[this.id];
+                    tmp = playerCells.indexOf(this);
+                    if (-1 != tmp) {
                         ua = true;
-                        playerCells.splice(a, 1);
+                        playerCells.splice(tmp, 1);
                     }
-                    a = nodesOnScreen.indexOf(this.id);
-                    if (-1 != a) {
-                        nodesOnScreen.splice(a, 1);
+                    tmp = nodesOnScreen.indexOf(this.id);
+                    if (-1 != tmp) {
+                        nodesOnScreen.splice(tmp, 1);
                     }
                     this.destroyed = true;
                     Cells.push(this)
@@ -999,7 +999,7 @@
                     }
                     if (0 == this.points.length && 0 < a) {
                         this.points.push({
-                            S: this,
+                            ref: this,
                             size: this.size,
                             x: this.x,
                             y: this.y
@@ -1010,7 +1010,7 @@
                         var b = ~~(Math.random() * this.points.length),
                             c = this.points[b];
                         this.points.splice(b, 0, {
-                            S: this,
+                            ref: this,
                             size: c.size,
                             x: c.x,
                             y: c.y
@@ -1026,7 +1026,7 @@
                     var b = this.size;
                     this.isVirus || (b *= viewZoom);
                     b *= z;
-                    this.nnn & 32 && (b *= .25);
+                    this.flag & 32 && (b *= .25);
                     return ~~Math.max(b, a);
                 },
                 movePoints: function () {
@@ -1049,7 +1049,7 @@
                                 n = a[d].x,
                                 q = a[d].y;
                             qTree.retrieve2(n - 5, q - 5, 10, 10, function (a) {
-                                if (a.S != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
+                                if (a.ref != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
                                     l = true;
                                 }
                             });
@@ -1133,15 +1133,15 @@
                             }
                         }
                         ctx.closePath();
-                        d = this.name.toLowerCase();
-                        if (!this.isAgitated && showSkin && ':teams' != N) {
-                            if (-1 != knownNameDict.indexOf(d)) {
-                                if (!K.hasOwnProperty(d)) {
-                                    K[d] = new Image;
-                                    K[d].src = SKIN_URL + d + '.png';
+                        var skinName = this.name.toLowerCase();
+                        if (!this.isAgitated && showSkin && ':teams' != gameMode) {
+                            if (-1 != knownNameDict.indexOf(skinName)) {
+                                if (!skins.hasOwnProperty(skinName)) {
+                                    skins[skinName] = new Image;
+                                    skins[skinName].src = SKIN_URL + skinName + '.png';
                                 }
-                                if (0 != K[d].width && K[d].complete) {
-                                    c = K[d];
+                                if (0 != skins[skinName].width && skins[skinName].complete) {
+                                    c = skins[skinName];
                                 } else {
                                     c = null;
                                 }
@@ -1151,7 +1151,7 @@
                         } else {
                             c = null;
                         }
-                        c = (e = c) ? -1 != ib.indexOf(d) : false;
+                        c = (e = c) ? -1 != ib.indexOf(skinName) : false;
                         b || ctx.stroke();
                         ctx.fill();
                         if (!(null == e || c)) {
@@ -1170,20 +1170,24 @@
                             ctx.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
                         }
                         c = -1 != playerCells.indexOf(this);
+
+                        //draw name
                         if (0 != this.id) {
                             b = ~~this.y;
-                            if ((showName || c) && this.name && this.nameCache && (null == e || -1 == hb.indexOf(d))) {
+                            if ((showName || c) && this.name && this.nameCache && (null == e || -1 == knownNameDict_noDisp.indexOf(skinName))) {
                                 e = this.nameCache;
                                 e.setValue(this.name);
                                 e.setSize(this.getNameSize());
-                                d = Math.ceil(10 * viewZoom) / 10;
-                                e.setScale(d);
+                                var ratio = Math.ceil(10 * viewZoom) / 10;
+                                e.setScale(ratio);
                                 var e = e.render(),
-                                    m = ~~(e.width / d),
-                                    h = ~~(e.height / d);
+                                    m = ~~(e.width / ratio),
+                                    h = ~~(e.height / ratio);
                                 ctx.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
-                                b += e.height / 2 / d + 4
+                                b += e.height / 2 / ratio + 4
                             }
+
+                            //draw mass
                             if (showMass && (c || 0 == playerCells.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
                                 if (null == this.sizeCache) {
                                     this.sizeCache = new uText(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
@@ -1191,11 +1195,11 @@
                                 c = this.sizeCache;
                                 c.setSize(this.getNameSize() / 2);
                                 c.setValue(~~(this.size * this.size / 100));
-                                d = Math.ceil(10 * viewZoom) / 10;
-                                c.setScale(d);
+                                var ratio = Math.ceil(10 * viewZoom) / 10;
+                                c.setScale(ratio);
                                 e = c.render();
-                                m = ~~(e.width / d);
-                                h = ~~(e.height / d);
+                                m = ~~(e.width / ratio);
+                                h = ~~(e.height / ratio);
                                 ctx.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
                             }
                         }
@@ -1244,25 +1248,25 @@
                     }
                     if (this._dirty) {
                         this._dirty = false;
-                        var a = this._canvas,
-                            b = this._ctx,
-                            c = this._value,
-                            d = this._scale,
-                            e = this._size,
-                            m = e + 'px Ubuntu';
-                        b.font = m;
-                        var h = ~~(.2 * e);
-                        a.width = (b.measureText(c).width +
-                            6) * d;
-                        a.height = (e + h) * d;
-                        b.font = m;
-                        b.scale(d, d);
-                        b.globalAlpha = 1;
-                        b.lineWidth = 3;
-                        b.strokeStyle = this._strokeColor;
-                        b.fillStyle = this._color;
-                        this._stroke && b.strokeText(c, 3, e - h / 2);
-                        b.fillText(c, 3, e - h / 2)
+                        var canvas = this._canvas,
+                            ctx = this._ctx,
+                            value = this._value,
+                            scale = this._scale,
+                            fontsize = this._size,
+                            font = fontsize + 'px Ubuntu';
+                        ctx.font = font;
+                        var h = ~~(.2 * fontsize);
+                        canvas.width = (ctx.measureText(value).width +
+                            6) * scale;
+                        canvas.height = (fontsize + h) * scale;
+                        ctx.font = font;
+                        ctx.scale(scale, scale);
+                        ctx.globalAlpha = 1;
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = this._strokeColor;
+                        ctx.fillStyle = this._color;
+                        this._stroke && ctx.strokeText(value, 3, fontsize - h / 2);
+                        ctx.fillText(value, 3, fontsize - h / 2)
                     }
                     return this._canvas
                 }
@@ -1288,14 +1292,14 @@
                         x: 0,
                         y: 0,
                         w: 0,
-                        getNameSize: 0,
+                        h: 0,
                         depth: 0,
                         items: null,
                         nodes: null,
                         exists: function (selector) {
                             for (var i = 0; i < this.items.length; ++i) {
                                 var item = this.items[i];
-                                if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.w && item.y < selector.y + selector.getNameSize) return true
+                                if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.w && item.y < selector.y + selector.h) return true
                             }
                             if (0 != this.nodes.length) {
                                 var self = this;
@@ -1354,7 +1358,7 @@
                         x: 0,
                         y: 0,
                         w: 0,
-                        getNameSize: 0
+                        h: 0
                     };
                     return {
                         root: new Node(args.minX, args.minY, args.maxX - args.minX, args.maxY - args.minY, 0),
@@ -1368,7 +1372,7 @@
                             internalSelector.x = a;
                             internalSelector.y = b;
                             internalSelector.w = c;
-                            internalSelector.getNameSize = d;
+                            internalSelector.h = d;
                             this.root.retrieve(internalSelector, callback)
                         },
                         exists: function (a) {
