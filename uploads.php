@@ -1,5 +1,5 @@
 <?php
-$target_dir = "./agar/skins/";
+$target_dir = "./skins/";
 $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
 $target_file = strtolower($target_file);
 $file = basename($_FILES["fileToUpload"]["name"]);
