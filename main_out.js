@@ -345,10 +345,10 @@
                 offset += 2;
                 lineY = msg.getInt16(offset, true);
                 offset += 2;
-                if (!ta) {
-                    ta = true;
-                    ca = lineX;
-                    da = lineY;
+                if (!drawLine) {
+                    drawLine = true;
+                    drawLineX = lineX;
+                    drawLineY = lineY;
                 }
                 break;
             case 32: // add node
@@ -358,15 +358,16 @@
             case 48: // update leaderboard (custom text)
                 setCustomLB = true;
                 noRanking = true;
+                break;
             case 49: // update leaderboard (ffa)
                 if (!setCustomLB) {
                     noRanking = false;
                 }
                 teamScores = null;
-                var validElements = msg.getUint32(offset, true);
+                var LBplayerNum = msg.getUint32(offset, true);
                 offset += 4;
                 leaderBoard = [];
-                for (var i = 0; i < validElements; ++i) {
+                for (var i = 0; i < LBplayerNum; ++i) {
                     var nodeId = msg.getUint32(offset, true);
                     offset += 4;
                     leaderBoard.push({
@@ -378,9 +379,9 @@
                 break;
             case 50: // update leaderboard (teams)
                 teamScores = [];
-                var validElements = msg.getUint32(offset, true);
+                var LBteamNum = msg.getUint32(offset, true);
                 offset += 4;
-                for (var i = 0; i < validElements; ++i) {
+                for (var i = 0; i < LBteamNum; ++i) {
                     teamScores.push(msg.getFloat32(offset, true));
                     offset += 4;
                 }
@@ -551,23 +552,23 @@
     }
 
     function viewRange() {
-        var a;
-        a = Math.max(canvasHeight / 1080, canvasWidth / 1920);
-        return a *= zoom
+        var ratio;
+        ratio = Math.max(canvasHeight / 1080, canvasWidth / 1920);
+        return ratio *= zoom
     }
 
     function calcViewZoom() {
         if (0 != playerCells.length) {
-            for (var a = 0, b = 0; b < playerCells.length; b++) a += playerCells[b].size;
-            a = Math.pow(Math.min(64 / a, 1), .4) * viewRange();
-            viewZoom = (9 * viewZoom + a) / 10
+            for (var newViewZoom = 0, i = 0; i < playerCells.length; i++) newViewZoom += playerCells[i].size;
+            newViewZoom = Math.pow(Math.min(64 / newViewZoom, 1), .4) * viewRange();
+            viewZoom = (9 * viewZoom + newViewZoom) / 10
         }
     }
 
     function drawGameScene() {
-        var a, b = Date.now();
+        var a,oldtime = Date.now();
         ++cb;
-        timestamp = b;
+        timestamp = oldtime;
         if (0 < playerCells.length) {
             calcViewZoom();
             var c = a = 0;
@@ -615,10 +616,10 @@
 
         for (d = 0; d < nodelist.length; d++) nodelist[d].drawOneCell(ctx);
         //console.log(Cells.length);
-        if (ta) {
-            ca = (3 * ca + lineX) /
+        if (drawLine) {
+            drawLineX = (3 * drawLineX + lineX) /
                 4;
-            da = (3 * da + lineY) / 4;
+            drawLineY = (3 * drawLineY + lineY) / 4;
             ctx.save();
             ctx.strokeStyle = "#FFAAAA";
             ctx.lineWidth = 10;
@@ -628,7 +629,7 @@
             ctx.beginPath();
             for (d = 0; d < playerCells.length; d++) {
                 ctx.moveTo(playerCells[d].x, playerCells[d].y);
-                ctx.lineTo(ca, da);
+                ctx.lineTo(drawLineX, drawLineY);
             }
             ctx.stroke();
             ctx.restore()
@@ -650,8 +651,8 @@
             ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5);
         }
         drawSplitIcon();
-        b = Date.now() - b;
-        b > 1E3 / 60 ? z -= .01 : b < 1E3 / 65 && (z += .01);
+        var deltatime = Date.now() - oldtime;
+        deltatime > 1E3 / 60 ? z -= .01 : deltatime < 1E3 / 65 && (z += .01);
         .4 > z && (z = .4);
         1 < z && (z = 1)
     }
@@ -808,11 +809,11 @@
             gameMode = "",
             teamScores = null,
             ma = false,
-            ta = false,
+            drawLine = false,
             lineX = 0,
             lineY = 0,
-            ca = 0,
-            da = 0,
+            drawLineX = 0,
+            drawLineY = 0,
             Ra = 0,
             teamColor = ["#333333", "#FF3333", "#33FF33", "#3333FF"],
             xa = false,
@@ -1031,47 +1032,47 @@
                 },
                 movePoints: function () {
                     this.createPoints();
-                    for (var a = this.points, b = this.pointsAcc, c = a.length, d = 0; d < c; ++d) {
-                        var e = b[(d - 1 + c) % c],
-                            m = b[(d + 1) % c];
-                        b[d] += (Math.random() - .5) * (this.isAgitated ? 3 : 1);
-                        b[d] *= .7;
-                        10 < b[d] && (b[d] = 10);
-                        -10 > b[d] && (b[d] = -10);
-                        b[d] = (e + m + 8 * b[d]) / 10
+                    for (var points = this.points, pointsacc = this.pointsAcc, numpoints = points.length, i = 0; i < numpoints; ++i) {
+                        var pos1 = pointsacc[(i - 1 + numpoints) % numpoints],
+                            pos2 = pointsacc[(i + 1) % numpoints];
+                        pointsacc[i] += (Math.random() - .5) * (this.isAgitated ? 3 : 1);
+                        pointsacc[i] *= .7;
+                        10 < pointsacc[i] && (pointsacc[i] = 10);
+                        -10 > pointsacc[i] && (pointsacc[i] = -10);
+                        pointsacc[i] = (pos1 + pos2 + 8 * pointsacc[i]) / 10
                     }
-                    for (var h = this, g = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), d = 0; d < c; ++d) {
-                        var f = a[d].size,
-                            e = a[(d - 1 + c) % c].size,
-                            m = a[(d + 1) % c].size;
+                    for (var ref = this, isvirus = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), i = 0; i < numpoints; ++i) {
+                        var f = points[i].size,
+                            e = points[(i - 1 + numpoints) % numpoints].size,
+                            m = points[(i + 1) % numpoints].size;
                         if (15 < this.size && null != qTree && 20 < this.size * viewZoom && 0 != this.id) {
                             var l = false,
-                                n = a[d].x,
-                                q = a[d].y;
+                                n = points[i].x,
+                                q = points[i].y;
                             qTree.retrieve2(n - 5, q - 5, 10, 10, function (a) {
-                                if (a.ref != h && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
+                                if (a.ref != ref && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
                                     l = true;
                                 }
                             });
-                            if (!l && a[d].x < leftPos || a[d].y < topPos || a[d].x > rightPos || a[d].y > bottomPos) {
+                            if (!l && points[i].x < leftPos || points[i].y < topPos || points[i].x > rightPos || points[i].y > bottomPos) {
                                 l = true;
                             }
                             if (l) {
-                                if (0 < b[d]) {
-                                    (b[d] = 0);
+                                if (0 < pointsacc[i]) {
+                                    (pointsacc[i] = 0);
                                 }
-                                b[d] -= 1;
+                                pointsacc[i] -= 1;
                             }
                         }
-                        f += b[d];
+                        f += pointsacc[i];
                         0 > f && (f = 0);
                         f = this.isAgitated ? (19 * f + this.size) / 20 : (12 * f + this.size) / 13;
-                        a[d].size = (e + m + 8 * f) / 10;
-                        e = 2 * Math.PI / c;
-                        m = this.points[d].size;
-                        this.isVirus && 0 == d % 2 && (m += 5);
-                        a[d].x = this.x + Math.cos(e * d + g) * m;
-                        a[d].y = this.y + Math.sin(e * d + g) * m
+                        points[i].size = (e + m + 8 * f) / 10;
+                        e = 2 * Math.PI / numpoints;
+                        m = this.points[i].size;
+                        this.isVirus && 0 == i % 2 && (m += 5);
+                        points[i].x = this.x + Math.cos(e * i + isvirus) * m;
+                        points[i].y = this.y + Math.sin(e * i + isvirus) * m
                     }
                 },
                 updatePos: function () {
@@ -1088,7 +1089,7 @@
                     this.x = a * (this.nx - this.ox) + this.ox;
                     this.y = a * (this.ny - this.oy) + this.oy;
                     this.size = b * (this.nSize - this.oSize) + this.oSize;
-                    return b
+                    return b;
                 },
                 shouldRender: function () {
                     if (0 == this.id) {
