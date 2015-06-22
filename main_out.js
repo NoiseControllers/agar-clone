@@ -1140,7 +1140,7 @@
                             var clanStart = skinName.indexOf('[');
                             var clanEnd = skinName.indexOf(']');
                             skinName = skinName.slice(clanStart+1,clanEnd);
-                            console.log(skinName);
+                            //console.log(skinName);
                         }
 
                         if (!this.isAgitated && showSkin && ':teams' != gameMode) {
