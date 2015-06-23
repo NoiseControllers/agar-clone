@@ -48,4 +48,4 @@ Pull Request are welcome.
 
 ## Disclaimer
 
-Note that the aim of this repo is to study agar.io client, understand the mechaism and find possible improvemtns. It is worth pointing out that hosting a third-party client is against the [Terms](http://agar.io/terms.txt) and not recommended by the owner of this repo. Please think twice before hosting the client and do it at your own risk. :)
+Note that the aim of this repo is to study agar.io client, understand the mechaism and find possible improvements. It is worth pointing out that hosting a third-party agar client is against the [Terms](http://agar.io/terms.txt) and not recommended by the owner of this repo. Please think twice before hosting the client and do it at your own risk. :)
