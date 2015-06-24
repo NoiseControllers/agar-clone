@@ -55,20 +55,20 @@
         wHandle.onkeydown = function (event) {
             switch (event.keyCode) {
                 case 32: // split
-                    if (!spacePressed) {
+                    if ((!spacePressed)&&(!isTyping)) {
                         sendMouseMove();
                         sendUint8(17);
                         spacePressed = true;
                     }
                     break;
                 case 81: // key q pressed
-                    if (!qPressed) {
+                    if ((!qPressed)&&(!isTyping)) {
                         sendUint8(18);
                         qPressed = true;
                     }
                     break;
                 case 87: // eject mass
-                    if (!wPressed) {
+                    if ((!wPressed)&&(!isTyping)) {
                         sendMouseMove();
                         sendUint8(21);
                         wPressed = true;
@@ -77,6 +77,21 @@
                 case 27: // quit
                     showOverlays(true);
                     break;
+
+                case 13:
+                    if (isTyping) {
+                        isTyping = false;
+                        document.getElementById("chat_textbox").blur();
+                        chattxt = document.getElementById("chat_textbox").value;
+                        if (chattxt.length>0) sendChat(chattxt);
+                        document.getElementById("chat_textbox").value = "";
+
+                    }
+                    else
+                    {
+                        document.getElementById("chat_textbox").focus();
+                        isTyping = true;
+                    }
             }
         };
         wHandle.onkeyup = function (event) {
@@ -93,20 +108,6 @@
                         qPressed = false;
                     }
                     break;
-                case 13:
-                    if (isTyping) {
-                        isTyping = false;
-                        document.getElementById("chat_textbox").blur();
-                        chattxt = document.getElementById("chat_textbox").value;
-                        if (chattxt.length>0) sendChat(chattxt);
-                        document.getElementById("chat_textbox").value = "";
-
-                    }
-                    else
-                    {
-                        document.getElementById("chat_textbox").focus();
-                        isTyping = true;
-                    }
             }
         };
         wHandle.onblur = function () {
@@ -471,7 +472,7 @@
 
         chatCanvas = document.createElement("canvas");
         var ctx = chatCanvas.getContext("2d");
-        chatCanvas.width = 700;
+        chatCanvas.width = 1000;
         chatCanvas.height = 550;
 
         ctx.globalAlpha = 0.7;
