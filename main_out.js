@@ -460,7 +460,7 @@
         //console.log(msg);
 
         chatBoard.push({"name":name, "color":color, "message":msg, "time":Date.now()});
-        console.log(chatBoard);
+        //console.log(chatBoard);
         drawChatBoard();
         //drawChatBoardLine();
     };
