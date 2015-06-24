@@ -460,7 +460,7 @@
         //console.log(color);
         //console.log(msg);
 
-        chatBoard.push({"name":name, "color":color, "message":msg, "time":Date.now()});
+        chatBoard.push({"name":name, "color":color, "message":msg,  "time": Date.now()});
         //console.log(chatBoard);
         drawChatBoard();
         //drawChatBoardLine();
@@ -475,7 +475,17 @@
         chatCanvas.width = 1000;
         chatCanvas.height = 550;
 
-        ctx.globalAlpha = 0.7;
+        var nowtime = Date.now();
+        var lasttime = 0;
+        if (chatBoard.length>=1)
+            lasttime = chatBoard[chatBoard.length-1].time;
+        else return;
+        var deltat = nowtime - lasttime;
+
+        ctx.globalAlpha = 0.8*Math.exp(-deltat/25000);
+        //console.log(deltat);
+
+
         var len = chatBoard.length;
         var from = len-15;
         if (from < 0) from = 0;
@@ -1545,7 +1555,8 @@
                 favCanvas.height = 32;
                 var ctx = favCanvas.getContext("2d");
                 renderFavicon();
-                setInterval(renderFavicon, 1E3)
+                setInterval(renderFavicon, 1E3);
+                setInterval(drawChatBoard, 1E3);
             });
             wHandle.onload = gameLoop
         }
