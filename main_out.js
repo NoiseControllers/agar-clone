@@ -674,8 +674,8 @@
     function canvasResize() {
         canvasWidth = wHandle.innerWidth;
         canvasHeight = wHandle.innerHeight;
-        nCanvas.width = mainCanvas.width = canvasWidth;
-        nCanvas.height = mainCanvas.height = canvasHeight;
+        nCanvas.width  = canvasWidth;
+        nCanvas.height = canvasHeight;
         drawGameScene()
     }
 
