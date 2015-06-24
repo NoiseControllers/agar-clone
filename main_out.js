@@ -467,8 +467,14 @@
 
     function drawChatBoard()
     {
-        ctx.save();
-        ctx.globalAlpha = 0.6;
+        //chatCanvas = null;
+
+        chatCanvas = document.createElement("canvas");
+        var ctx = chatCanvas.getContext("2d");
+        chatCanvas.width = 700;
+        chatCanvas.height = 550;
+
+        ctx.globalAlpha = 0.7;
         var len = chatBoard.length;
         var from = len-15;
         if (from < 0) from = 0;
@@ -478,15 +484,14 @@
             chatName.setValue(chatBoard[i+from].name);
             var width = chatName.getWidth();
             var a = chatName.render();
-            ctx.drawImage(a, 15, canvasHeight - 50  - 24*(len-i-from) );
-            
+            ctx.drawImage(a, 15, chatCanvas.height - 50  - 24*(len-i-from) );
+
             var  chatText = new uText(18,'#666666');
             chatText.setValue(':'+chatBoard[i+from].message);
             a = chatText.render();
-            ctx.drawImage(a, 15+width*1.8 , canvasHeight - 50  - 24*(len-from-i));
+            ctx.drawImage(a, 15+width*1.8 , chatCanvas.height - 50  - 24*(len-from-i));
         }
-        ctx.restore();
-
+        //ctx.restore();
     }
 
 
@@ -747,7 +752,9 @@
             ctx.restore()
         }
         ctx.restore();
-        Canvas && Canvas.width && ctx.drawImage(Canvas, canvasWidth - Canvas.width - 10, 10);
+        lbCanvas && lbCanvas.width && ctx.drawImage(lbCanvas, canvasWidth - lbCanvas.width - 10, 10); // draw Leader Board
+        if (chatCanvas!=null) ctx.drawImage(chatCanvas, 0, canvasHeight-chatCanvas.height); // draw Leader Board
+
         userScore = Math.max(userScore, calcUserScore());
         if (0 != userScore) {
             if (null == scoreText) {
@@ -763,7 +770,7 @@
             ctx.drawImage(c, 15, 15 );//canvasHeight - 10 - 24 - 5
         }
         drawSplitIcon();
-        drawChatBoard();
+        //drawChatBoard();
         var deltatime = Date.now() - oldtime;
         deltatime > 1E3 / 60 ? z -= .01 : deltatime < 1E3 / 65 && (z += .01);
         .4 > z && (z = .4);
@@ -807,16 +814,16 @@
     }
 
     function drawLeaderBoard() {
-        Canvas = null;
+        lbCanvas = null;
         if (null != teamScores || 0 != leaderBoard.length)
             if (null != teamScores || showName) {
-                Canvas = document.createElement("canvas");
-                var ctx = Canvas.getContext("2d"),
+                lbCanvas = document.createElement("canvas");
+                var ctx = lbCanvas.getContext("2d"),
                     boardLength = 60;
                 boardLength = null == teamScores ? boardLength + 24 * leaderBoard.length : boardLength + 180;
                 var scaleFactor = Math.min(200, .3 * canvasWidth) / 200;
-                Canvas.width = 200 * scaleFactor;
-                Canvas.height = boardLength * scaleFactor;
+                lbCanvas.width = 200 * scaleFactor;
+                lbCanvas.height = boardLength * scaleFactor;
 
                 ctx.scale(scaleFactor, scaleFactor);
                 ctx.globalAlpha = .4;
@@ -890,7 +897,7 @@
         localProtocolHttps = "https:" == localProtocol;
     if (wHandle.location.ancestorOrigins && wHandle.location.ancestorOrigins.length && "https://apps.facebook.com" != wHandle.location.ancestorOrigins[0]) wHandle.top.location = "http://agar.io/";
     else {
-        var nCanvas, ctx, Canvas, canvasWidth, canvasHeight, qTree = null,
+        var nCanvas, ctx, Canvas, lbCanvas, chatCanvas , canvasWidth, canvasHeight, qTree = null,
             ws = null,
             nodeX = 0,
             nodeY = 0,
