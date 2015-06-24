@@ -761,13 +761,13 @@
                 scoreText = new UText(24, '#FFFFFF');
             }
             scoreText.setValue('Score: ' + ~~(userScore / 100));
-            var img = scoreText.render();
-            var w = img.width;
+            c = scoreText.render();
+            a = c.width;
             ctx.globalAlpha = .2;
             ctx.fillStyle = '#000000';
-            ctx.fillRect(10, 10, w + 10, 34);//canvasHeight - 10 - 24 - 10
+            ctx.fillRect(10, 10, a + 10, 34);//canvasHeight - 10 - 24 - 10
             ctx.globalAlpha = 1;
-            ctx.drawImage(img, 15, 15 );//canvasHeight - 10 - 24 - 5
+            ctx.drawImage(c, 15, 15 );//canvasHeight - 10 - 24 - 5
         }
         drawSplitIcon();
         //drawChatBoard();
@@ -1144,9 +1144,9 @@
                 },
                 getNumPoints: function () {
                     if (0 == this.id) return 16;
-                    var a;
-                    if (20 > this.size) a = 0;
-                    if (this.isVirus) a = 30;
+                    var a = 10;
+                    20 > this.size && (a = 0);
+                    this.isVirus && (a = 30);
                     var b = this.size;
                     this.isVirus || (b *= viewZoom);
                     b *= z;
