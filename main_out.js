@@ -14,6 +14,9 @@
 
     function gameLoop() {
         ma = true;
+        document.getElementById("canvas").focus();
+        var isTyping = false;
+        var chattxt;
         getServerList();
         setInterval(getServerList, 18E4);
         Canvas = nCanvas = document.getElementById("canvas");
@@ -28,6 +31,7 @@
                     return
                 }
             }
+
             rawMouseX = event.clientX;
             rawMouseY = event.clientY;
             mouseCoordinateChange();
@@ -87,6 +91,21 @@
                     if (qPressed) {
                         sendUint8(19);
                         qPressed = false;
+                    }
+                    break;
+                case 13:
+                    if (isTyping) {
+                        isTyping = false;
+                        document.getElementById("chat_textbox").blur();
+                        chattxt = document.getElementById("chat_textbox").value;
+                        if (chattxt.length>0) sendChat(chattxt);
+                        document.getElementById("chat_textbox").value = "";
+
+                    }
+                    else
+                    {
+                        document.getElementById("chat_textbox").focus();
+                        isTyping = true;
                     }
             }
         };
@@ -296,7 +315,7 @@
         msg.setUint8(0, 255);
         msg.setUint32(1, 1332175218, true);
         wsSend(msg);
-        sendNickName()
+        sendNickName();
     }
 
     function onWsClose() {
@@ -405,8 +424,71 @@
                     viewZoom = posSize;
                 }
                 break;
+            case 99:
+                //alert("get message");
+
+                addChat(msg, offset);
+
+                break;
+
         }
     }
+
+
+    function addChat(view, offset) {
+        //console.log(offset);
+        var lenname = view.getUint8(offset,true);
+        var lencolor = view.getUint8(offset+1,true);
+        var lenstr = view.getUint8(offset+2,true);
+        console.log(lenname);
+        console.log(lencolor);
+        console.log(lenstr);
+        var char;
+        var text='';
+
+        for (var i = offset+3; i < offset+3+2*(lenname+lencolor+lenstr); i+=2 )
+        {
+            char = view.getUint16(i, true);
+            text += String.fromCharCode(char);
+        }
+        //console.log(text);
+        var name = text.slice(0,lenname);
+        var color = text.slice(lenname,lenname+lencolor);
+        var msg = text.slice(lenname+lencolor,lenname+lencolor+lenstr);
+        //console.log(name);
+        //console.log(color);
+        //console.log(msg);
+
+        chatBoard.push({"name":name, "color":color, "message":msg, "time":Date.now()});
+        console.log(chatBoard);
+        drawChatBoard();
+        //drawChatBoardLine();
+    };
+
+    function drawChatBoard()
+    {
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        var len = chatBoard.length;
+        var from = len-15;
+        if (from < 0) from = 0;
+        for (var i = 0; i < (len-from); i++ )
+        {
+            var chatName = new uText(18,chatBoard[i+from].color);
+            chatName.setValue(chatBoard[i+from].name);
+            var width = chatName.getWidth();
+            var a = chatName.render();
+            ctx.drawImage(a, 15, canvasHeight - 50  - 24*(len-i-from) );
+            
+            var  chatText = new uText(18,'#666666');
+            chatText.setValue(':'+chatBoard[i+from].message);
+            a = chatText.render();
+            ctx.drawImage(a, 15+width*1.8 , canvasHeight - 50  - 24*(len-from-i));
+        }
+        ctx.restore();
+
+    }
+
 
     function updateNodes(view, offset) {
         timestamp = +new Date;
@@ -523,6 +605,36 @@
             msg.setUint8(0, 0);
             for (var i = 0; i < userNickName.length; ++i) msg.setUint16(1 + 2 * i, userNickName.charCodeAt(i), true);
             wsSend(msg)
+        }
+    }
+
+    function sendChat(str) {
+        if (wsIsOpen() && (str.length<250) && (str.length>0)) {
+            var name,color;
+            if (playerCells.length == 0) {
+                    name = "Observer";
+                    color = "#999999";
+            }
+            else {
+                name = userNickName;
+                if (name.length == 0) name = "An unnamed cell";
+                color = playerCells[0].color;
+            }
+
+            //console.log(name);
+            //console.log(color);
+            //console.log(str);
+            var msgstr = name+color+str;
+            var msg = prepareData(4 + 2 * msgstr.length);
+            msg.setUint8(0, 99);
+            msg.setUint8(1, name.length);
+            msg.setUint8(2, color.length);
+            msg.setUint8(3, str.length);
+            for (var i = 0; i < msgstr.length; ++i)
+                msg.setUint16(4 + 2 * i, msgstr.charCodeAt(i), true);
+
+            wsSend(msg);
+            //console.log(msgstr);
         }
     }
 
@@ -646,11 +758,12 @@
             a = c.width;
             ctx.globalAlpha = .2;
             ctx.fillStyle = '#000000';
-            ctx.fillRect(10, canvasHeight - 10 - 24 - 10, a + 10, 34);
+            ctx.fillRect(10, 10, a + 10, 34);//canvasHeight - 10 - 24 - 10
             ctx.globalAlpha = 1;
-            ctx.drawImage(c, 15, canvasHeight - 10 - 24 - 5);
+            ctx.drawImage(c, 15, 15 );//canvasHeight - 10 - 24 - 5
         }
         drawSplitIcon();
+        drawChatBoard();
         var deltatime = Date.now() - oldtime;
         deltatime > 1E3 / 60 ? z -= .01 : deltatime < 1E3 / 65 && (z += .01);
         .4 > z && (z = .4);
@@ -682,10 +795,10 @@
     }
 
     function drawSplitIcon() {
-        if (isTouchStart && splitIcon.width) {
+        /*if (isTouchStart && splitIcon.width) {
             var size = canvasWidth / 5;
             ctx.drawImage(splitIcon, 5, 5, size, size)
-        }
+        }*/
     }
 
     function calcUserScore() {
@@ -699,21 +812,24 @@
             if (null != teamScores || showName) {
                 Canvas = document.createElement("canvas");
                 var ctx = Canvas.getContext("2d"),
-                    b = 60,
-                    b = null == teamScores ? b + 24 * leaderBoard.length : b + 180,
-                    c = Math.min(200, .3 * canvasWidth) / 200;
-                Canvas.width = 200 * c;
-                Canvas.height = b * c;
-                ctx.scale(c, c);
+                    boardLength = 60;
+                boardLength = null == teamScores ? boardLength + 24 * leaderBoard.length : boardLength + 180;
+                var scaleFactor = Math.min(200, .3 * canvasWidth) / 200;
+                Canvas.width = 200 * scaleFactor;
+                Canvas.height = boardLength * scaleFactor;
+
+                ctx.scale(scaleFactor, scaleFactor);
                 ctx.globalAlpha = .4;
                 ctx.fillStyle = "#000000";
-                ctx.fillRect(0, 0, 200, b);
+                ctx.fillRect(0, 0, 200, boardLength);
+
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = "#FFFFFF";
-                c = null;
+                var c = null;
                 c = "Leaderboard";
                 ctx.font = "30px Ubuntu";
                 ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 40);
+                var b;
                 if (null == teamScores) {
                     for (ctx.font = "20px Ubuntu", b = 0; b < leaderBoard.length; ++b) {
                         c = leaderBoard[b].name || "An unnamed cell";
@@ -783,6 +899,7 @@
             nodes = {}, nodelist = [],
             Cells = [],
             leaderBoard = [],
+            chatBoard = [],
             rawMouseX = 0,
             rawMouseY = 0,
             X = -1,
@@ -1278,7 +1395,11 @@
                         ctx.fillText(value, 3, fontsize - h / 2)
                     }
                     return this._canvas
-                }
+                },
+                getWidth: function() {
+                    return (ctx.measureText(this._value).width +
+                            6);
+            }
             };
             Date.now || (Date.now = function () {
                 return (new Date).getTime()
