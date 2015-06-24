@@ -16,9 +16,10 @@ Please document any changes introduced here. Direction has to be either `S2C` (s
 |C2S       | 254 |                1 | Version number|
 |C2S       | 255 |       1332175218 | String "Ogar" - Tells the server how to use the modified protocol|
 |S2C       |  48 | behaves like #49 | Leaderboard without numbers|
+|C2S       | 99  | Packet ID , len(name) , len(color) , len(message) followed with a string consisting name,color and message | For in-game chat, number is in Uint8, each char is in Uint16|
+|S2C | 99 | same as above | same as above |
 
 Hint : to use Packet 48, make sure the packet ID in case 48 of Ogar/src/packet/UpdateLeaderboard.js is adjusted like this: 
-
 ```
 view.setUint8(0, this.packetLB, true);
 ```
