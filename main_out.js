@@ -19,9 +19,9 @@
         var chattxt;
         getServerList();
         setInterval(getServerList, 18E4);
-        Canvas = nCanvas = document.getElementById("canvas");
-        ctx = Canvas.getContext("2d");
-        Canvas.onmousedown = function (event) {
+        mainCanvas = nCanvas = document.getElementById("canvas");
+        ctx = mainCanvas.getContext("2d");
+        mainCanvas.onmousedown = function (event) {
             if (isTouchStart) {
                 var xOffset = event.clientX - (5 + canvasWidth / 5 / 2),
                     yOffset = event.clientY - (5 + canvasWidth / 5 / 2);
@@ -37,12 +37,12 @@
             mouseCoordinateChange();
             sendMouseMove()
         };
-        Canvas.onmousemove = function (event) {
+        mainCanvas.onmousemove = function (event) {
             rawMouseX = event.clientX;
             rawMouseY = event.clientY;
             mouseCoordinateChange()
         };
-        Canvas.onmouseup = function () {
+        mainCanvas.onmouseup = function () {
         };
         if (/firefox/i.test(navigator.userAgent)) {
             document.addEventListener("DOMMouseScroll", handleWheel, false);
@@ -183,22 +183,22 @@
     }
 
     function getServerList() {
-        if (null == $) {
-            $ = {};
+        if (null == playerStat) {
+            playerStat = {};
             wjQuery("#region").children().each(function () {
                 var a = wjQuery(this),
                     b = a.val();
-                b && ($[b] = a.text())
+                b && (playerStat[b] = a.text())
             });
         }
         wjQuery.get("info.php", function (a) {
-            var b = {}, c;
-            for (c in a.regions) {
-                var d = c.split(":")[0];
-                b[d] = b[d] || 0;
-                b[d] += a.regions[c].numPlayers
+            var numPlayers = {};
+            for (var region in a.regions) {
+                var d = region.split(":")[0];
+                numPlayers[d] = numPlayers[d] || 0;
+                numPlayers[d] += a.regions[region].numPlayers
             }
-            for (c in b) wjQuery('#region option[value="' + c + '"]').text($[c] + " (" + b[c] + " players)")
+            for (var numplayer in numPlayers) wjQuery('#region option[value="' + numplayer + '"]').text(playerStat[numplayer] + " (" + numPlayers[numplayer] + " players)")
         }, "json")
     }
 
@@ -238,7 +238,7 @@
             error: function () {
                 setTimeout(attemptConnection, 1E3)
             },
-            success: function (a) {
+            success: function () {
                 wsConnect("ws://" + CONNECTION_URL)
             },
             dataType: "text",
@@ -281,7 +281,7 @@
         nodelist = [];
         Cells = [];
         leaderBoard = [];
-        Canvas = teamScores = null;
+        mainCanvas = teamScores = null;
         userScore = 0;
         console.log("Connecting to " + wsUrl);
         ws = new WebSocket(wsUrl);
@@ -331,7 +331,7 @@
     function handleWsMessage(msg) {
         function getString() {
             var text = '',
-                char = 0;
+                char;
             while ((char = msg.getUint16(offset, true)) != 0) {
                 offset += 2;
                 text += String.fromCharCode(char);
@@ -386,7 +386,7 @@
                 var LBplayerNum = msg.getUint32(offset, true);
                 offset += 4;
                 leaderBoard = [];
-                for (var i = 0; i < LBplayerNum; ++i) {
+                for (i = 0; i < LBplayerNum; ++i) {
                     var nodeId = msg.getUint32(offset, true);
                     offset += 4;
                     leaderBoard.push({
@@ -437,9 +437,9 @@
 
     function addChat(view, offset) {
         //console.log(offset);
-        var lenname = view.getUint8(offset,true);
-        var lencolor = view.getUint8(offset+1,true);
-        var lenstr = view.getUint8(offset+2,true);
+        var lenname = view.getUint8(offset);
+        var lencolor = view.getUint8(offset+1);
+        var lenstr = view.getUint8(offset+2);
         console.log(lenname);
         console.log(lencolor);
         console.log(lenstr);
@@ -463,7 +463,7 @@
         //console.log(chatBoard);
         drawChatBoard();
         //drawChatBoardLine();
-    };
+    }
 
     function drawChatBoard()
     {
@@ -480,13 +480,13 @@
         if (from < 0) from = 0;
         for (var i = 0; i < (len-from); i++ )
         {
-            var chatName = new uText(18,chatBoard[i+from].color);
+            var chatName = new UText(18,chatBoard[i+from].color);
             chatName.setValue(chatBoard[i+from].name);
             var width = chatName.getWidth();
             var a = chatName.render();
             ctx.drawImage(a, 15, chatCanvas.height - 50  - 24*(len-i-from) );
 
-            var  chatText = new uText(18,'#666666');
+            var  chatText = new UText(18,'#666666');
             chatText.setValue(':'+chatBoard[i+from].message);
             a = chatText.render();
             ctx.drawImage(a, 15+width*1.8 , chatCanvas.height - 50  - 24*(len-from-i));
@@ -501,7 +501,7 @@
         ua = false;
         var queueLength = view.getUint16(offset, true);
         offset += 2;
-        for (var i = 0; i < queueLength; ++i) {
+        for (i = 0; i < queueLength; ++i) {
             var killer = nodes[view.getUint32(offset, true)],
                 killedNode = nodes[view.getUint32(offset + 4, true)];
             offset += 8;
@@ -517,9 +517,9 @@
             }
         }
         for (var i = 0; ;) {
-            var nodeId = view.getUint32(offset, true);
+            var nodeid = view.getUint32(offset, true);
             offset += 4;
-            if (0 == nodeId) break;
+            if (0 == nodeid) break;
             ++i;
             var size, posY, posX = view.getInt16(offset, true);
             offset += 2;
@@ -529,7 +529,7 @@
             offset += 2;
             for (var r = view.getUint8(offset++), g = view.getUint8(offset++), b = view.getUint8(offset++),
                      color = (r << 16 | g << 8 | b).toString(16); 6 > color.length;) color = "0" + color;
-            var color = "#" + color,
+            var colorstr = "#" + color,
                 flags = view.getUint8(offset++),
                 flagVirus = !!(flags & 1),
                 flagAgitated = !!(flags & 16);
@@ -543,17 +543,17 @@
                 name += String.fromCharCode(char)
             }
             var node = null;
-            if (nodes.hasOwnProperty(nodeId)) {
-                node = nodes[nodeId];
+            if (nodes.hasOwnProperty(nodeid)) {
+                node = nodes[nodeid];
                 node.updatePos();
                 node.ox = node.x;
                 node.oy = node.y;
                 node.oSize = node.size;
-                node.color = color;
+                node.color = colorstr;
             } else {
-                node = new Cell(nodeId, posX, posY, size, color, name);
+                node = new Cell(nodeid, posX, posY, size, colorstr, name);
                 nodelist.push(node);
-                nodes[nodeId] = node;
+                nodes[nodeid] = node;
                 node.ka = posX;
                 node.la = posY;
             }
@@ -566,7 +566,7 @@
             node.updateTime = timestamp;
             node.flag = flags;
             name && node.setName(name);
-            if (-1 != nodesOnScreen.indexOf(nodeId) && -1 == playerCells.indexOf(node)) {
+            if (-1 != nodesOnScreen.indexOf(nodeid) && -1 == playerCells.indexOf(node)) {
                 document.getElementById("overlays").style.display = "none";
                 playerCells.push(node);
                 if (1 == playerCells.length) {
@@ -575,9 +575,9 @@
                 }
             }
         }
-        var queueLength = view.getUint32(offset, true);
+        queueLength = view.getUint32(offset, true);
         offset += 4;
-        for (var i = 0; i < queueLength; i++) {
+        for (i = 0; i < queueLength; i++) {
             var nodeId = view.getUint32(offset, true);
             offset += 4;
             node = nodes[nodeId];
@@ -663,15 +663,15 @@
     function canvasResize() {
         canvasWidth = wHandle.innerWidth;
         canvasHeight = wHandle.innerHeight;
-        nCanvas.width = Canvas.width = canvasWidth;
-        nCanvas.height = Canvas.height = canvasHeight;
+        nCanvas.width = mainCanvas.width = canvasWidth;
+        nCanvas.height = mainCanvas.height = canvasHeight;
         drawGameScene()
     }
 
     function viewRange() {
         var ratio;
         ratio = Math.max(canvasHeight / 1080, canvasWidth / 1920);
-        return ratio *= zoom
+        return ratio * zoom;
     }
 
     function calcViewZoom() {
@@ -758,16 +758,16 @@
         userScore = Math.max(userScore, calcUserScore());
         if (0 != userScore) {
             if (null == scoreText) {
-                scoreText = new uText(24, '#FFFFFF');
+                scoreText = new UText(24, '#FFFFFF');
             }
             scoreText.setValue('Score: ' + ~~(userScore / 100));
-            c = scoreText.render();
-            a = c.width;
+            var img = scoreText.render();
+            var w = img.width;
             ctx.globalAlpha = .2;
             ctx.fillStyle = '#000000';
-            ctx.fillRect(10, 10, a + 10, 34);//canvasHeight - 10 - 24 - 10
+            ctx.fillRect(10, 10, w + 10, 34);//canvasHeight - 10 - 24 - 10
             ctx.globalAlpha = 1;
-            ctx.drawImage(c, 15, 15 );//canvasHeight - 10 - 24 - 5
+            ctx.drawImage(img, 15, 15 );//canvasHeight - 10 - 24 - 5
         }
         drawSplitIcon();
         //drawChatBoard();
@@ -832,8 +832,7 @@
 
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = "#FFFFFF";
-                var c = null;
-                c = "Leaderboard";
+                var c = "Leaderboard";
                 ctx.font = "30px Ubuntu";
                 ctx.fillText(c, 100 - ctx.measureText(c).width / 2, 40);
                 var b;
@@ -885,7 +884,7 @@
         this.setName(uname)
     }
 
-    function uText(usize, ucolor, ustroke, ustrokecolor) {
+    function UText(usize, ucolor, ustroke, ustrokecolor) {
         usize && (this._size = usize);
         ucolor && (this._color = ucolor);
         this._stroke = !!ustroke;
@@ -897,7 +896,7 @@
         localProtocolHttps = "https:" == localProtocol;
     if (wHandle.location.ancestorOrigins && wHandle.location.ancestorOrigins.length && "https://apps.facebook.com" != wHandle.location.ancestorOrigins[0]) wHandle.top.location = "http://agar.io/";
     else {
-        var nCanvas, ctx, Canvas, lbCanvas, chatCanvas , canvasWidth, canvasHeight, qTree = null,
+        var nCanvas, ctx, mainCanvas, lbCanvas, chatCanvas , canvasWidth, canvasHeight, qTree = null,
             ws = null,
             nodeX = 0,
             nodeY = 0,
@@ -949,7 +948,7 @@
         var wCanvas = document.createElement("canvas");
         if ("undefined" == typeof console || "undefined" == typeof DataView || "undefined" == typeof WebSocket || null == wCanvas || null == wCanvas.getContext || null == wHandle.localStorage) alert("You browser does not support this game, we recommend you to use Firefox to play this");
         else {
-            var $ = null;
+            var playerStat = null;
             wHandle.setNick = function (arg) {
                 hideOverlays();
                 userNickName = arg;
@@ -1108,7 +1107,7 @@
                 setName: function (a) {
                     if (this.name = a) {
                         if (null == this.nameCache) {
-                            this.nameCache = new uText(this.getNameSize(), "#FFFFFF", true, "#000000");
+                            this.nameCache = new UText(this.getNameSize(), "#FFFFFF", true, "#000000");
                             this.nameCache.setValue(this.name);
                         } else {
                             this.nameCache.setSize(this.getNameSize());
@@ -1117,12 +1116,12 @@
                     }
                 },
                 createPoints: function () {
-                    for (var a = this.getNumPoints(); this.points.length > a;) {
-                        var b = ~~(Math.random() * this.points.length);
-                        this.points.splice(b, 1);
-                        this.pointsAcc.splice(b, 1)
+                    for (var samplenum = this.getNumPoints(); this.points.length > samplenum;) {
+                        var rand = ~~(Math.random() * this.points.length);
+                        this.points.splice(rand, 1);
+                        this.pointsAcc.splice(rand, 1)
                     }
-                    if (0 == this.points.length && 0 < a) {
+                    if (0 == this.points.length && 0 < samplenum) {
                         this.points.push({
                             ref: this,
                             size: this.size,
@@ -1131,23 +1130,23 @@
                         });
                         this.pointsAcc.push(Math.random() - .5);
                     }
-                    while (this.points.length < a) {
-                        var b = ~~(Math.random() * this.points.length),
-                            c = this.points[b];
-                        this.points.splice(b, 0, {
+                    while (this.points.length < samplenum) {
+                        var rand2 = ~~(Math.random() * this.points.length),
+                            point = this.points[rand2];
+                        this.points.splice(rand2, 0, {
                             ref: this,
-                            size: c.size,
-                            x: c.x,
-                            y: c.y
+                            size: point.size,
+                            x: point.x,
+                            y: point.y
                         });
-                        this.pointsAcc.splice(b, 0, this.pointsAcc[b])
+                        this.pointsAcc.splice(rand2, 0, this.pointsAcc[rand2])
                     }
                 },
                 getNumPoints: function () {
                     if (0 == this.id) return 16;
-                    var a = 10;
-                    20 > this.size && (a = 0);
-                    this.isVirus && (a = 30);
+                    var a;
+                    if (20 > this.size) a = 0;
+                    if (this.isVirus) a = 30;
                     var b = this.size;
                     this.isVirus || (b *= viewZoom);
                     b *= z;
@@ -1165,38 +1164,38 @@
                         -10 > pointsacc[i] && (pointsacc[i] = -10);
                         pointsacc[i] = (pos1 + pos2 + 8 * pointsacc[i]) / 10
                     }
-                    for (var ref = this, isvirus = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), i = 0; i < numpoints; ++i) {
-                        var f = points[i].size,
-                            e = points[(i - 1 + numpoints) % numpoints].size,
-                            m = points[(i + 1) % numpoints].size;
+                    for (var ref = this, isvirus = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), j = 0; j < numpoints; ++j) {
+                        var f = points[j].size,
+                            e = points[(j - 1 + numpoints) % numpoints].size,
+                            m = points[(j + 1) % numpoints].size;
                         if (15 < this.size && null != qTree && 20 < this.size * viewZoom && 0 != this.id) {
                             var l = false,
-                                n = points[i].x,
-                                q = points[i].y;
+                                n = points[j].x,
+                                q = points[j].y;
                             qTree.retrieve2(n - 5, q - 5, 10, 10, function (a) {
                                 if (a.ref != ref && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
                                     l = true;
                                 }
                             });
-                            if (!l && points[i].x < leftPos || points[i].y < topPos || points[i].x > rightPos || points[i].y > bottomPos) {
+                            if (!l && points[j].x < leftPos || points[j].y < topPos || points[j].x > rightPos || points[j].y > bottomPos) {
                                 l = true;
                             }
                             if (l) {
-                                if (0 < pointsacc[i]) {
-                                    (pointsacc[i] = 0);
+                                if (0 < pointsacc[j]) {
+                                    (pointsacc[j] = 0);
                                 }
-                                pointsacc[i] -= 1;
+                                pointsacc[j] -= 1;
                             }
                         }
-                        f += pointsacc[i];
+                        f += pointsacc[j];
                         0 > f && (f = 0);
                         f = this.isAgitated ? (19 * f + this.size) / 20 : (12 * f + this.size) / 13;
-                        points[i].size = (e + m + 8 * f) / 10;
+                        points[j].size = (e + m + 8 * f) / 10;
                         e = 2 * Math.PI / numpoints;
-                        m = this.points[i].size;
-                        this.isVirus && 0 == i % 2 && (m += 5);
-                        points[i].x = this.x + Math.cos(e * i + isvirus) * m;
-                        points[i].y = this.y + Math.sin(e * i + isvirus) * m
+                        m = this.points[j].size;
+                        this.isVirus && 0 == j % 2 && (m += 5);
+                        points[j].x = this.x + Math.cos(e * j + isvirus) * m;
+                        points[j].y = this.y + Math.sin(e * j + isvirus) * m
                     }
                 },
                 updatePos: function () {
@@ -1219,7 +1218,7 @@
                     if (0 == this.id) {
                         return true
                     } else {
-                        return this.x + this.size + 40 < nodeX - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < nodeY - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > nodeX + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > nodeY + canvasHeight / 2 / viewZoom ? false : true
+                        return !(this.x + this.size + 40 < nodeX - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < nodeY - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > nodeX + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > nodeY + canvasHeight / 2 / viewZoom);
                     }
                 },
                 drawOneCell: function (ctx) {
@@ -1303,32 +1302,32 @@
                             ctx.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
                         }
                         c = -1 != playerCells.indexOf(this);
-
+                        var ncache;
                         //draw name
                         if (0 != this.id) {
                             b = ~~this.y;
                             if ((showName || c) && this.name && this.nameCache && (null == e || -1 == knownNameDict_noDisp.indexOf(skinName))) {
-                                e = this.nameCache;
-                                e.setValue(this.name);
-                                e.setSize(this.getNameSize());
+                                ncache = this.nameCache;
+                                ncache.setValue(this.name);
+                                ncache.setSize(this.getNameSize());
                                 var ratio = Math.ceil(10 * viewZoom) / 10;
-                                e.setScale(ratio);
-                                var e = e.render(),
-                                    m = ~~(e.width / ratio),
-                                    h = ~~(e.height / ratio);
-                                ctx.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
-                                b += e.height / 2 / ratio + 4
+                                ncache.setScale(ratio);
+                                var rnchache = ncache.render(),
+                                    m = ~~(rnchache.width / ratio),
+                                    h = ~~(rnchache.height / ratio);
+                                ctx.drawImage(rnchache, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
+                                b += rnchache.height / 2 / ratio + 4
                             }
 
                             //draw mass
                             if (showMass && (c || 0 == playerCells.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
                                 if (null == this.sizeCache) {
-                                    this.sizeCache = new uText(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
+                                    this.sizeCache = new UText(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
                                 }
                                 c = this.sizeCache;
                                 c.setSize(this.getNameSize() / 2);
                                 c.setValue(~~(this.size * this.size / 100));
-                                var ratio = Math.ceil(10 * viewZoom) / 10;
+                                ratio = Math.ceil(10 * viewZoom) / 10;
                                 c.setScale(ratio);
                                 e = c.render();
                                 m = ~~(e.width / ratio);
@@ -1340,7 +1339,7 @@
                     }
                 }
             };
-            uText.prototype = {
+            UText.prototype = {
                 _value: "",
                 _color: "#000000",
                 _stroke: false,
@@ -1535,15 +1534,15 @@
                     ctx.restore();
                     var favicon = document.getElementById("favicon"),
                         oldfavicon = favicon.cloneNode(true);
-                    oldfavicon.setAttribute("href", Canvas.toDataURL("image/png"));
+                    oldfavicon.setAttribute("href", favCanvas.toDataURL("image/png"));
                     favicon.parentNode.replaceChild(oldfavicon, favicon)
                 }
 
                 var redCell = new Cell(0, 0, 0, 32, "#ED1C24", ""),
-                    Canvas = document.createElement("canvas");
-                Canvas.width = 32;
-                Canvas.height = 32;
-                var ctx = Canvas.getContext("2d");
+                    favCanvas = document.createElement("canvas");
+                favCanvas.width = 32;
+                favCanvas.height = 32;
+                var ctx = favCanvas.getContext("2d");
                 renderFavicon();
                 setInterval(renderFavicon, 1E3)
             });
