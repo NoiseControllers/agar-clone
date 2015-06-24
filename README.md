@@ -9,7 +9,6 @@ This is a clone of agar.io. In this project we aim to acheive the following.
 - [ ] Add mobile device support (On-going)
 - [ ] Support multi-server feature (On-going)
 
-
 ##Setup
 
 You can use nginx that support PHP to deploy it on your server. 
