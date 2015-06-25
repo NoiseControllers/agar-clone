@@ -649,32 +649,18 @@
     }
 
     function sendChat(str) {
-        if (wsIsOpen() && (str.length < 250) && (str.length > 0)) {
-            var name, color;
-            if (playerCells.length == 0) {
-                name = "Observer";
-                color = "#999999";
+        if (wsIsOpen() && (str.length < 200) && (str.length > 0)) {
+            var msg = prepareData(2 + 2 * str.length);
+            var offset = 0;
+            msg.setUint8(offset++, 99);
+            msg.setUint8(offset++, 0); // flags (0 for now)
+            for (var i = 0; i < str.length; ++i) {
+                msg.setUint16(offset, str.charCodeAt(i), true);
+                offset += 2;
             }
-            else {
-                name = userNickName;
-                if (name.length == 0) name = "An unnamed cell";
-                color = playerCells[0].color;
-            }
-
-            //console.log(name);
-            //console.log(color);
-            //console.log(str);
-            var msgstr = name + color + str;
-            var msg = prepareData(4 + 2 * msgstr.length);
-            msg.setUint8(0, 99);
-            msg.setUint8(1, name.length);
-            msg.setUint8(2, color.length);
-            msg.setUint8(3, str.length);
-            for (var i = 0; i < msgstr.length; ++i)
-                msg.setUint16(4 + 2 * i, msgstr.charCodeAt(i), true);
 
             wsSend(msg);
-            //console.log(msgstr);
+            //console.log(msg);
         }
     }
 
