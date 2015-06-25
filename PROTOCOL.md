@@ -26,6 +26,7 @@ Hint : to use Packet 48, make sure the packet ID in case 48 of Ogar/src/packet/U
 ```
 view.setUint8(0, this.packetLB, true);
 ```
+You can also use https://github.com/m-byte/Ogar, which already has this feature enabled.
 
 ### Version 2
 TODO: We could add chat functionality in this version. That way, only one websocket server would be needed.
