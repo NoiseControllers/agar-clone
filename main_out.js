@@ -49,6 +49,20 @@
         } else {
             document.body.onmousewheel = handleWheel;
         }
+
+        mainCanvas.onfocus = function() {
+            isTyping = false;
+        };
+
+        document.getElementById("chat_textbox").onblur = function () {
+            isTyping = false;
+        };
+
+
+        document.getElementById("chat_textbox").onfocus = function () {
+            isTyping = true;
+        };
+
         var spacePressed = false,
             qPressed = false,
             wPressed = false;
@@ -129,7 +143,7 @@
         Ha();
         setRegion(wjQuery("#region").val());
         null == ws && w && showConnecting();
-        wjQuery("#overlays").show()
+        wjQuery("#overlays").show();
     }
 
 
@@ -1156,12 +1170,12 @@
                 getNumPoints: function () {
                     if (0 == this.id) return 16;
                     var a = 10;
-                    20 > this.size && (a = 0);
-                    this.isVirus && (a = 30);
+                    if (20 > this.size) a = 0;
+                    if (this.isVirus) a = 30;
                     var b = this.size;
-                    this.isVirus || (b *= viewZoom);
+                    if (!this.isVirus) (b *= viewZoom);
                     b *= z;
-                    this.flag & 32 && (b *= .25);
+                    if (this.flag & 32) (b *= .25);
                     return ~~Math.max(b, a);
                 },
                 movePoints: function () {
@@ -1234,8 +1248,8 @@
                 },
                 drawOneCell: function (ctx) {
                     if (this.shouldRender()) {
-                        var b = 0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom;
-                        5 > this.getNumPoints() && (b = true);
+                        var b = (0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom);
+                        if (5 > this.getNumPoints()) b = true;
                         if (this.wasSimpleDrawing && !b)
                             for (var c = 0; c < this.points.length; c++) this.points[c].size = this.size;
                         this.wasSimpleDrawing = b;
@@ -1316,7 +1330,7 @@
                         var ncache;
                         //draw name
                         if (0 != this.id) {
-                            b = ~~this.y;
+                            var b = ~~this.y;
                             if ((showName || c) && this.name && this.nameCache && (null == e || -1 == knownNameDict_noDisp.indexOf(skinName))) {
                                 ncache = this.nameCache;
                                 ncache.setValue(this.name);
