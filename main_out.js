@@ -50,7 +50,7 @@
             document.body.onmousewheel = handleWheel;
         }
 
-        mainCanvas.onfocus = function() {
+        mainCanvas.onfocus = function () {
             isTyping = false;
         };
 
@@ -69,20 +69,20 @@
         wHandle.onkeydown = function (event) {
             switch (event.keyCode) {
                 case 32: // split
-                    if ((!spacePressed)&&(!isTyping)) {
+                    if ((!spacePressed) && (!isTyping)) {
                         sendMouseMove();
                         sendUint8(17);
                         spacePressed = true;
                     }
                     break;
                 case 81: // key q pressed
-                    if ((!qPressed)&&(!isTyping)) {
+                    if ((!qPressed) && (!isTyping)) {
                         sendUint8(18);
                         qPressed = true;
                     }
                     break;
                 case 87: // eject mass
-                    if ((!wPressed)&&(!isTyping)) {
+                    if ((!wPressed) && (!isTyping)) {
                         sendMouseMove();
                         sendUint8(21);
                         wPressed = true;
@@ -97,12 +97,11 @@
                         isTyping = false;
                         document.getElementById("chat_textbox").blur();
                         chattxt = document.getElementById("chat_textbox").value;
-                        if (chattxt.length>0) sendChat(chattxt);
+                        if (chattxt.length > 0) sendChat(chattxt);
                         document.getElementById("chat_textbox").value = "";
 
                     }
-                    else
-                    {
+                    else {
                         document.getElementById("chat_textbox").focus();
                         isTyping = true;
                     }
@@ -451,37 +450,49 @@
 
 
     function addChat(view, offset) {
-        //console.log(offset);
-        var lenname = view.getUint8(offset);
-        var lencolor = view.getUint8(offset+1);
-        var lenstr = view.getUint8(offset+2);
-        console.log(lenname);
-        console.log(lencolor);
-        console.log(lenstr);
-        var char;
-        var text='';
-
-        for (var i = offset+3; i < offset+3+2*(lenname+lencolor+lenstr); i+=2 )
-        {
-            char = view.getUint16(i, true);
-            text += String.fromCharCode(char);
+        function getString() {
+            var text = '',
+                char;
+            while ((char = view.getUint16(offset, true)) != 0) {
+                offset += 2;
+                text += String.fromCharCode(char);
+            }
+            offset += 2;
+            return text;
         }
-        //console.log(text);
-        var name = text.slice(0,lenname);
-        var color = text.slice(lenname,lenname+lencolor);
-        var msg = text.slice(lenname+lencolor,lenname+lencolor+lenstr);
-        //console.log(name);
-        //console.log(color);
-        //console.log(msg);
 
-        chatBoard.push({"name":name, "color":color, "message":msg,  "time": Date.now()});
+        var flags = view.getUint8(offset++);
+        // for future expansions
+        if (flags & 2) {
+            offset += 4;
+        }
+        if (flags & 4) {
+            offset += 8;
+        }
+        if (flags & 8) {
+            offset += 16;
+        }
+
+        var r = view.getUint8(offset++),
+            g = view.getUint8(offset++),
+            b = view.getUint8(offset++),
+            color = (r << 16 | g << 8 | b).toString(16);
+        while(color.length > 6){
+            color = '0' + color;
+        }
+        color = '#' + color;
+        chatBoard.push({
+            "name": getString(),
+            "color": color,
+            "message": getString(),
+            "time": Date.now()
+        });
         //console.log(chatBoard);
         drawChatBoard();
         //drawChatBoardLine();
     }
 
-    function drawChatBoard()
-    {
+    function drawChatBoard() {
         //chatCanvas = null;
 
         chatCanvas = document.createElement("canvas");
@@ -491,30 +502,29 @@
 
         var nowtime = Date.now();
         var lasttime = 0;
-        if (chatBoard.length>=1)
-            lasttime = chatBoard[chatBoard.length-1].time;
+        if (chatBoard.length >= 1)
+            lasttime = chatBoard[chatBoard.length - 1].time;
         else return;
         var deltat = nowtime - lasttime;
 
-        ctx.globalAlpha = 0.8*Math.exp(-deltat/25000);
+        ctx.globalAlpha = 0.8 * Math.exp(-deltat / 25000);
         //console.log(deltat);
 
 
         var len = chatBoard.length;
-        var from = len-15;
+        var from = len - 15;
         if (from < 0) from = 0;
-        for (var i = 0; i < (len-from); i++ )
-        {
-            var chatName = new UText(18,chatBoard[i+from].color);
-            chatName.setValue(chatBoard[i+from].name);
+        for (var i = 0; i < (len - from); i++) {
+            var chatName = new UText(18, chatBoard[i + from].color);
+            chatName.setValue(chatBoard[i + from].name);
             var width = chatName.getWidth();
             var a = chatName.render();
-            ctx.drawImage(a, 15, chatCanvas.height - 50  - 24*(len-i-from) );
+            ctx.drawImage(a, 15, chatCanvas.height - 50 - 24 * (len - i - from));
 
-            var  chatText = new UText(18,'#666666');
-            chatText.setValue(':'+chatBoard[i+from].message);
+            var chatText = new UText(18, '#666666');
+            chatText.setValue(':' + chatBoard[i + from].message);
             a = chatText.render();
-            ctx.drawImage(a, 15+width*1.8 , chatCanvas.height - 50  - 24*(len-from-i));
+            ctx.drawImage(a, 15 + width * 1.8, chatCanvas.height - 50 - 24 * (len - from - i));
         }
         //ctx.restore();
     }
@@ -639,32 +649,18 @@
     }
 
     function sendChat(str) {
-        if (wsIsOpen() && (str.length<250) && (str.length>0)) {
-            var name,color;
-            if (playerCells.length == 0) {
-                    name = "Observer";
-                    color = "#999999";
+        if (wsIsOpen() && (str.length < 200) && (str.length > 0)) {
+            var msg = prepareData(2 + 2 * str.length);
+            var offset = 0;
+            msg.setUint8(offset++, 99);
+            msg.setUint8(offset++, 0); // flags (0 for now)
+            for (var i = 0; i < str.length; ++i) {
+                msg.setUint16(offset, str.charCodeAt(i), true);
+                offset += 2;
             }
-            else {
-                name = userNickName;
-                if (name.length == 0) name = "An unnamed cell";
-                color = playerCells[0].color;
-            }
-
-            //console.log(name);
-            //console.log(color);
-            //console.log(str);
-            var msgstr = name+color+str;
-            var msg = prepareData(4 + 2 * msgstr.length);
-            msg.setUint8(0, 99);
-            msg.setUint8(1, name.length);
-            msg.setUint8(2, color.length);
-            msg.setUint8(3, str.length);
-            for (var i = 0; i < msgstr.length; ++i)
-                msg.setUint16(4 + 2 * i, msgstr.charCodeAt(i), true);
 
             wsSend(msg);
-            //console.log(msgstr);
+            //console.log(msg);
         }
     }
 
@@ -688,7 +684,7 @@
     function canvasResize() {
         canvasWidth = wHandle.innerWidth;
         canvasHeight = wHandle.innerHeight;
-        nCanvas.width  = canvasWidth;
+        nCanvas.width = canvasWidth;
         nCanvas.height = canvasHeight;
         drawGameScene()
     }
@@ -708,7 +704,7 @@
     }
 
     function drawGameScene() {
-        var a,oldtime = Date.now();
+        var a, oldtime = Date.now();
         ++cb;
         timestamp = oldtime;
         if (0 < playerCells.length) {
@@ -778,7 +774,7 @@
         }
         ctx.restore();
         lbCanvas && lbCanvas.width && ctx.drawImage(lbCanvas, canvasWidth - lbCanvas.width - 10, 10); // draw Leader Board
-        if (chatCanvas!=null) ctx.drawImage(chatCanvas, 0, canvasHeight-chatCanvas.height); // draw Leader Board
+        if (chatCanvas != null) ctx.drawImage(chatCanvas, 0, canvasHeight - chatCanvas.height); // draw Leader Board
 
         userScore = Math.max(userScore, calcUserScore());
         if (0 != userScore) {
@@ -792,7 +788,7 @@
             ctx.fillStyle = '#000000';
             ctx.fillRect(10, 10, a + 10, 34);//canvasHeight - 10 - 24 - 10
             ctx.globalAlpha = 1;
-            ctx.drawImage(c, 15, 15 );//canvasHeight - 10 - 24 - 5
+            ctx.drawImage(c, 15, 15);//canvasHeight - 10 - 24 - 5
         }
         drawSplitIcon();
         //drawChatBoard();
@@ -828,9 +824,9 @@
 
     function drawSplitIcon() {
         /*if (isTouchStart && splitIcon.width) {
-            var size = canvasWidth / 5;
-            ctx.drawImage(splitIcon, 5, 5, size, size)
-        }*/
+         var size = canvasWidth / 5;
+         ctx.drawImage(splitIcon, 5, 5, size, size)
+         }*/
     }
 
     function calcUserScore() {
@@ -921,7 +917,7 @@
         localProtocolHttps = "https:" == localProtocol;
     if (wHandle.location.ancestorOrigins && wHandle.location.ancestorOrigins.length && "https://apps.facebook.com" != wHandle.location.ancestorOrigins[0]) wHandle.top.location = "http://agar.io/";
     else {
-        var nCanvas, ctx, mainCanvas, lbCanvas, chatCanvas , canvasWidth, canvasHeight, qTree = null,
+        var nCanvas, ctx, mainCanvas, lbCanvas, chatCanvas, canvasWidth, canvasHeight, qTree = null,
             ws = null,
             nodeX = 0,
             nodeY = 0,
@@ -1283,11 +1279,10 @@
                         }
                         ctx.closePath();
                         var skinName = this.name.toLowerCase();
-                        if (skinName.indexOf('[')!=-1)
-                        {
+                        if (skinName.indexOf('[') != -1) {
                             var clanStart = skinName.indexOf('[');
                             var clanEnd = skinName.indexOf(']');
-                            skinName = skinName.slice(clanStart+1,clanEnd);
+                            skinName = skinName.slice(clanStart + 1, clanEnd);
                             //console.log(skinName);
                         }
 
@@ -1427,10 +1422,10 @@
                     }
                     return this._canvas
                 },
-                getWidth: function() {
+                getWidth: function () {
                     return (ctx.measureText(this._value).width +
-                            6);
-            }
+                    6);
+                }
             };
             Date.now || (Date.now = function () {
                 return (new Date).getTime()

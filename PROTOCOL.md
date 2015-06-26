@@ -16,13 +16,17 @@ Please document any changes introduced here. Direction has to be either `S2C` (s
 |C2S       | 254 |                1 | Version number|
 |C2S       | 255 |       1332175218 | String "Ogar" - Tells the server how to use the modified protocol|
 |S2C       |  48 | behaves like #49 | Leaderboard without numbers|
-|C2S       | 99  | Packet ID , len(name) , len(color) , len(message) followed with a string consisting name,color and message | For in-game chat, number is in Uint8, each char is in Uint16|
-|S2C | 99 | same as above | same as above |
+|C2S       |  99 | flags (uint8) [1], message | For in-game chat, each char is in Uint16 |
+|S2C       |  99 | flags (uint8) [1], r (uint8), g (uint8), b (uint8), nick, '\0', message, '\0' | same as above |
+
+ [1] If flags has the 2, 4, or 8 bit set, an offset of 4, 8, or 16 bytes follows before any other data. Until these additional
+   bytes are used, just skip them. 
 
 Hint : to use Packet 48, make sure the packet ID in case 48 of Ogar/src/packet/UpdateLeaderboard.js is adjusted like this: 
 ```
 view.setUint8(0, this.packetLB, true);
 ```
+You can also use https://github.com/m-byte/Ogar, which already has this feature enabled.
 
 ### Version 2
 TODO: We could add chat functionality in this version. That way, only one websocket server would be needed.
