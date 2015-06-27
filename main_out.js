@@ -497,9 +497,10 @@
 
         chatCanvas = document.createElement("canvas");
         var ctx = chatCanvas.getContext("2d");
-        chatCanvas.width = 1000;
-        chatCanvas.height = 550;
-
+        var scaleFactor = Math.max(canvasWidth/1200,0.75);
+        chatCanvas.width = 1000*scaleFactor;
+        chatCanvas.height = 550*scaleFactor;
+        ctx.scale(scaleFactor,scaleFactor);
         var nowtime = Date.now();
         var lasttime = 0;
         if (chatBoard.length >= 1)
@@ -519,12 +520,12 @@
             chatName.setValue(chatBoard[i + from].name);
             var width = chatName.getWidth();
             var a = chatName.render();
-            ctx.drawImage(a, 15, chatCanvas.height - 50 - 24 * (len - i - from));
+            ctx.drawImage(a, 15, chatCanvas.height/scaleFactor - 24 * (len - i - from));
 
             var chatText = new UText(18, '#666666');
             chatText.setValue(':' + chatBoard[i + from].message);
             a = chatText.render();
-            ctx.drawImage(a, 15 + width * 1.8, chatCanvas.height - 50 - 24 * (len - from - i));
+            ctx.drawImage(a, 15 + width * 1.8, chatCanvas.height/scaleFactor - 24 * (len - from - i));
         }
         //ctx.restore();
     }
@@ -774,7 +775,7 @@
         }
         ctx.restore();
         lbCanvas && lbCanvas.width && ctx.drawImage(lbCanvas, canvasWidth - lbCanvas.width - 10, 10); // draw Leader Board
-        if (chatCanvas != null) ctx.drawImage(chatCanvas, 0, canvasHeight - chatCanvas.height); // draw Leader Board
+        if (chatCanvas != null) ctx.drawImage(chatCanvas, 0, canvasHeight - chatCanvas.height - 50); // draw Leader Board
 
         userScore = Math.max(userScore, calcUserScore());
         if (0 != userScore) {
