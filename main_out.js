@@ -283,10 +283,6 @@
         }
         var c = CONNECTION_URL;
         wsUrl = "ws://" + c;
-        if (localProtocolHttps) {
-            wsUrl = wsUrl.split(":");
-            wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3);
-        }
         nodesOnScreen = [];
         playerCells = [];
         nodes = {};
@@ -475,7 +471,7 @@
             g = view.getUint8(offset++),
             b = view.getUint8(offset++),
             color = (r << 16 | g << 8 | b).toString(16);
-        while(color.length > 6){
+        while (color.length > 6) {
             color = '0' + color;
         }
         color = '#' + color;
@@ -495,10 +491,10 @@
 
         chatCanvas = document.createElement("canvas");
         var ctx = chatCanvas.getContext("2d");
-        var scaleFactor = Math.max(canvasWidth/1200,0.75);
-        chatCanvas.width = 1000*scaleFactor;
-        chatCanvas.height = 550*scaleFactor;
-        ctx.scale(scaleFactor,scaleFactor);
+        var scaleFactor = Math.max(canvasWidth / 1200, 0.75);
+        chatCanvas.width = 1000 * scaleFactor;
+        chatCanvas.height = 550 * scaleFactor;
+        ctx.scale(scaleFactor, scaleFactor);
         var nowtime = Date.now();
         var lasttime = 0;
         if (chatBoard.length >= 1)
@@ -518,12 +514,12 @@
             chatName.setValue(chatBoard[i + from].name);
             var width = chatName.getWidth();
             var a = chatName.render();
-            ctx.drawImage(a, 15, chatCanvas.height/scaleFactor - 24 * (len - i - from));
+            ctx.drawImage(a, 15, chatCanvas.height / scaleFactor - 24 * (len - i - from));
 
             var chatText = new UText(18, '#666666');
             chatText.setValue(':' + chatBoard[i + from].message);
             a = chatText.render();
-            ctx.drawImage(a, 15 + width * 1.8, chatCanvas.height/scaleFactor - 24 * (len - from - i));
+            ctx.drawImage(a, 15 + width * 1.8, chatCanvas.height / scaleFactor - 24 * (len - from - i));
         }
         //ctx.restore();
     }
@@ -914,660 +910,654 @@
 
     var localProtocol = wHandle.location.protocol,
         localProtocolHttps = "https:" == localProtocol;
-    if (wHandle.location.ancestorOrigins && wHandle.location.ancestorOrigins.length && "https://apps.facebook.com" != wHandle.location.ancestorOrigins[0]) wHandle.top.location = "http://agar.io/";
-    else {
-        var nCanvas, ctx, mainCanvas, lbCanvas, chatCanvas, canvasWidth, canvasHeight, qTree = null,
-            ws = null,
-            nodeX = 0,
-            nodeY = 0,
-            nodesOnScreen = [],
-            playerCells = [],
-            nodes = {}, nodelist = [],
-            Cells = [],
-            leaderBoard = [],
-            chatBoard = [],
-            rawMouseX = 0,
-            rawMouseY = 0,
-            X = -1,
-            Y = -1,
-            cb = 0,
-            timestamp = 0,
-            userNickName = null,
-            leftPos = 0,
-            topPos = 0,
-            rightPos = 1E4,
-            bottomPos = 1E4,
-            viewZoom = 1,
-            w = null,
-            showSkin = true,
-            showName = true,
-            showColor = false,
-            ua = false,
-            userScore = 0,
-            showDarkTheme = false,
-            showMass = false,
-            posX = nodeX = ~~((leftPos + rightPos) / 2),
-            posY = nodeY = ~~((topPos + bottomPos) / 2),
-            posSize = 1,
-            gameMode = "",
-            teamScores = null,
-            ma = false,
-            drawLine = false,
-            lineX = 0,
-            lineY = 0,
-            drawLineX = 0,
-            drawLineY = 0,
-            Ra = 0,
-            teamColor = ["#333333", "#FF3333", "#33FF33", "#3333FF"],
-            xa = false,
-            zoom = 1,
-            isTouchStart = "ontouchstart" in wHandle && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-            splitIcon = new Image,
-            noRanking = false;
-        splitIcon.src = "http://agar.io/img/split.png";
-        var wCanvas = document.createElement("canvas");
-        if ("undefined" == typeof console || "undefined" == typeof DataView || "undefined" == typeof WebSocket || null == wCanvas || null == wCanvas.getContext || null == wHandle.localStorage) alert("You browser does not support this game, we recommend you to use Firefox to play this");
-        else {
-            var playerStat = null;
-            wHandle.setNick = function (arg) {
-                hideOverlays();
-                userNickName = arg;
-                sendNickName();
-                userScore = 0
-            };
-            wHandle.setRegion = setRegion;
-            wHandle.setSkins = function (arg) {
-                showSkin = arg
-            };
-            wHandle.setNames = function (arg) {
-                showName = arg
-            };
-            wHandle.setDarkTheme = function (arg) {
-                showDarkTheme = arg
-            };
-            wHandle.setColors = function (arg) {
-                showColor = arg
-            };
-            wHandle.setShowMass = function (arg) {
-                showMass = arg
-            };
-            wHandle.spectate = function () {
-                userNickName = null;
-                sendUint8(1);
-                hideOverlays()
-            };
-            wHandle.setGameMode = function (arg) {
-                if (arg != gameMode) {
-                    gameMode = arg;
-                    showConnecting();
-                }
-            };
-            wHandle.setAcid = function (arg) {
-                xa = arg
-            };
-            if (null != wHandle.localStorage) {
-                if (null == wHandle.localStorage.AB8) {
-                    wHandle.localStorage.AB8 = ~~(100 * Math.random());
-                }
-                Ra = +wHandle.localStorage.AB8;
-                wHandle.ABGroup = Ra;
+    var nCanvas, ctx, mainCanvas, lbCanvas, chatCanvas, canvasWidth, canvasHeight, qTree = null,
+        ws = null,
+        nodeX = 0,
+        nodeY = 0,
+        nodesOnScreen = [],
+        playerCells = [],
+        nodes = {}, nodelist = [],
+        Cells = [],
+        leaderBoard = [],
+        chatBoard = [],
+        rawMouseX = 0,
+        rawMouseY = 0,
+        X = -1,
+        Y = -1,
+        cb = 0,
+        timestamp = 0,
+        userNickName = null,
+        leftPos = 0,
+        topPos = 0,
+        rightPos = 1E4,
+        bottomPos = 1E4,
+        viewZoom = 1,
+        w = null,
+        showSkin = true,
+        showName = true,
+        showColor = false,
+        ua = false,
+        userScore = 0,
+        showDarkTheme = false,
+        showMass = false,
+        posX = nodeX = ~~((leftPos + rightPos) / 2),
+        posY = nodeY = ~~((topPos + bottomPos) / 2),
+        posSize = 1,
+        gameMode = "",
+        teamScores = null,
+        ma = false,
+        drawLine = false,
+        lineX = 0,
+        lineY = 0,
+        drawLineX = 0,
+        drawLineY = 0,
+        Ra = 0,
+        teamColor = ["#333333", "#FF3333", "#33FF33", "#3333FF"],
+        xa = false,
+        zoom = 1,
+        isTouchStart = "ontouchstart" in wHandle && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+        splitIcon = new Image,
+        noRanking = false;
+    splitIcon.src = "http://agar.io/img/split.png";
+    var wCanvas = document.createElement("canvas");
+    var playerStat = null;
+    wHandle.setNick = function (arg) {
+        hideOverlays();
+        userNickName = arg;
+        sendNickName();
+        userScore = 0
+    };
+    wHandle.setRegion = setRegion;
+    wHandle.setSkins = function (arg) {
+        showSkin = arg
+    };
+    wHandle.setNames = function (arg) {
+        showName = arg
+    };
+    wHandle.setDarkTheme = function (arg) {
+        showDarkTheme = arg
+    };
+    wHandle.setColors = function (arg) {
+        showColor = arg
+    };
+    wHandle.setShowMass = function (arg) {
+        showMass = arg
+    };
+    wHandle.spectate = function () {
+        userNickName = null;
+        sendUint8(1);
+        hideOverlays()
+    };
+    wHandle.setGameMode = function (arg) {
+        if (arg != gameMode) {
+            gameMode = arg;
+            showConnecting();
+        }
+    };
+    wHandle.setAcid = function (arg) {
+        xa = arg
+    };
+    if (null != wHandle.localStorage) {
+        if (null == wHandle.localStorage.AB8) {
+            wHandle.localStorage.AB8 = ~~(100 * Math.random());
+        }
+        Ra = +wHandle.localStorage.AB8;
+        wHandle.ABGroup = Ra;
+    }
+    /*wjQuery.get(localProtocol + "//gc.agar.io", function (a) {
+     var b = a.split(" ");
+     a = b[0];
+     b = b[1] || "";
+     -1 == "DE IL PL HU BR AT UA".split(" ").indexOf(a) && knownNameDict.push("nazi");
+     -1 == ["UA"].indexOf(a) && knownNameDict.push("ussr");
+     T.hasOwnProperty(a) && ("string" == typeof T[a] ? w || setRegion(T[a]) : T[a].hasOwnProperty(b) && (w || setRegion(T[a][b])))
+     }, "text");*/
+    setTimeout(function () {
+    }, 3E5);
+    var T = {
+        ZW: "EU-London"
+    };
+    wHandle.connect = wsConnect;
+
+    //This part is for loading custon skins
+    var data = {"action": "test"};
+    var response = null;
+    wjQuery.ajax({
+        type: "POST",
+        dataType: "json",
+        url: "checkdir.php", //Relative or absolute path to response.php file
+        data: data,
+        success: function (data) {
+            //alert(data["names"]);
+            response = JSON.parse(data["names"]);
+        }
+    });
+
+
+    var interval1Id = setInterval(function () {
+        //console.log("logging every 5 seconds");
+        //console.log(Aa);
+
+        wjQuery.ajax({
+            type: "POST",
+            dataType: "json",
+            url: "checkdir.php", //Relative or absolute path to response.php file
+            data: data,
+            success: function (data) {
+                //alert(data["names"]);
+                response = JSON.parse(data["names"]);
             }
-            wjQuery.get(localProtocol + "//gc.agar.io", function (a) {
-                var b = a.split(" ");
-                a = b[0];
-                b = b[1] || "";
-                -1 == "DE IL PL HU BR AT UA".split(" ").indexOf(a) && knownNameDict.push("nazi");
-                -1 == ["UA"].indexOf(a) && knownNameDict.push("ussr");
-                T.hasOwnProperty(a) && ("string" == typeof T[a] ? w || setRegion(T[a]) : T[a].hasOwnProperty(b) && (w || setRegion(T[a][b])))
-            }, "text");
-            setTimeout(function () {
-            }, 3E5);
-            var T = {
-                ZW: "EU-London"
-            };
-            wHandle.connect = wsConnect;
+        });
+        //console.log(response);
+        for (var i = 0; i < response.length; i++) {
+            //console.log(response[insert]);
+            if (-1 == knownNameDict.indexOf(response[i])) {
+                knownNameDict.push(response[i]);
+                //console.log("Add:"+response[i]);
+            }
+        }
+    }, 15000);
 
-            //This part is for loading custon skins
-            var data = {"action": "test"};
-            var response = null;
-            wjQuery.ajax({
-                type: "POST",
-                dataType: "json",
-                url: "checkdir.php", //Relative or absolute path to response.php file
-                data: data,
-                success: function (data) {
-                    //alert(data["names"]);
-                    response = JSON.parse(data["names"]);
+
+    var delay = 500,
+        oldX = -1,
+        oldY = -1,
+        Canvas = null,
+        z = 1,
+        scoreText = null,
+        skins = {},
+        knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
+        knownNameDict_noDisp = ["8", "nasa"],
+        ib = ["_canvas'blob"];
+    Cell.prototype = {
+        id: 0,
+        points: null,
+        pointsAcc: null,
+        name: null,
+        nameCache: null,
+        sizeCache: null,
+        x: 0,
+        y: 0,
+        size: 0,
+        ox: 0,
+        oy: 0,
+        oSize: 0,
+        nx: 0,
+        ny: 0,
+        nSize: 0,
+        flag: 0, //what does this mean
+        updateTime: 0,
+        updateCode: 0,
+        drawTime: 0,
+        destroyed: false,
+        isVirus: false,
+        isAgitated: false,
+        wasSimpleDrawing: true,
+        destroy: function () {
+            var tmp;
+            for (tmp = 0; tmp < nodelist.length; tmp++)
+                if (nodelist[tmp] == this) {
+                    nodelist.splice(tmp, 1);
+                    break
                 }
-            });
-
-
-            var interval1Id = setInterval(function () {
-                //console.log("logging every 5 seconds");
-                //console.log(Aa);
-
-                wjQuery.ajax({
-                    type: "POST",
-                    dataType: "json",
-                    url: "checkdir.php", //Relative or absolute path to response.php file
-                    data: data,
-                    success: function (data) {
-                        //alert(data["names"]);
-                        response = JSON.parse(data["names"]);
-                    }
+            delete nodes[this.id];
+            tmp = playerCells.indexOf(this);
+            if (-1 != tmp) {
+                ua = true;
+                playerCells.splice(tmp, 1);
+            }
+            tmp = nodesOnScreen.indexOf(this.id);
+            if (-1 != tmp) {
+                nodesOnScreen.splice(tmp, 1);
+            }
+            this.destroyed = true;
+            Cells.push(this)
+        },
+        getNameSize: function () {
+            return Math.max(~~(.3 * this.size), 24)
+        },
+        setName: function (a) {
+            if (this.name = a) {
+                if (null == this.nameCache) {
+                    this.nameCache = new UText(this.getNameSize(), "#FFFFFF", true, "#000000");
+                    this.nameCache.setValue(this.name);
+                } else {
+                    this.nameCache.setSize(this.getNameSize());
+                    this.nameCache.setValue(this.name);
+                }
+            }
+        },
+        createPoints: function () {
+            for (var samplenum = this.getNumPoints(); this.points.length > samplenum;) {
+                var rand = ~~(Math.random() * this.points.length);
+                this.points.splice(rand, 1);
+                this.pointsAcc.splice(rand, 1)
+            }
+            if (0 == this.points.length && 0 < samplenum) {
+                this.points.push({
+                    ref: this,
+                    size: this.size,
+                    x: this.x,
+                    y: this.y
                 });
-                //console.log(response);
-                for (var i = 0; i < response.length; i++) {
-                    //console.log(response[insert]);
-                    if (-1 == knownNameDict.indexOf(response[i])) {
-                        knownNameDict.push(response[i]);
-                        //console.log("Add:"+response[i]);
+                this.pointsAcc.push(Math.random() - .5);
+            }
+            while (this.points.length < samplenum) {
+                var rand2 = ~~(Math.random() * this.points.length),
+                    point = this.points[rand2];
+                this.points.splice(rand2, 0, {
+                    ref: this,
+                    size: point.size,
+                    x: point.x,
+                    y: point.y
+                });
+                this.pointsAcc.splice(rand2, 0, this.pointsAcc[rand2])
+            }
+        },
+        getNumPoints: function () {
+            if (0 == this.id) return 16;
+            var a = 10;
+            if (20 > this.size) a = 0;
+            if (this.isVirus) a = 30;
+            var b = this.size;
+            if (!this.isVirus) (b *= viewZoom);
+            b *= z;
+            if (this.flag & 32) (b *= .25);
+            return ~~Math.max(b, a);
+        },
+        movePoints: function () {
+            this.createPoints();
+            for (var points = this.points, pointsacc = this.pointsAcc, numpoints = points.length, i = 0; i < numpoints; ++i) {
+                var pos1 = pointsacc[(i - 1 + numpoints) % numpoints],
+                    pos2 = pointsacc[(i + 1) % numpoints];
+                pointsacc[i] += (Math.random() - .5) * (this.isAgitated ? 3 : 1);
+                pointsacc[i] *= .7;
+                10 < pointsacc[i] && (pointsacc[i] = 10);
+                -10 > pointsacc[i] && (pointsacc[i] = -10);
+                pointsacc[i] = (pos1 + pos2 + 8 * pointsacc[i]) / 10
+            }
+            for (var ref = this, isvirus = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), j = 0; j < numpoints; ++j) {
+                var f = points[j].size,
+                    e = points[(j - 1 + numpoints) % numpoints].size,
+                    m = points[(j + 1) % numpoints].size;
+                if (15 < this.size && null != qTree && 20 < this.size * viewZoom && 0 != this.id) {
+                    var l = false,
+                        n = points[j].x,
+                        q = points[j].y;
+                    qTree.retrieve2(n - 5, q - 5, 10, 10, function (a) {
+                        if (a.ref != ref && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
+                            l = true;
+                        }
+                    });
+                    if (!l && points[j].x < leftPos || points[j].y < topPos || points[j].x > rightPos || points[j].y > bottomPos) {
+                        l = true;
+                    }
+                    if (l) {
+                        if (0 < pointsacc[j]) {
+                            (pointsacc[j] = 0);
+                        }
+                        pointsacc[j] -= 1;
                     }
                 }
-            }, 15000);
+                f += pointsacc[j];
+                0 > f && (f = 0);
+                f = this.isAgitated ? (19 * f + this.size) / 20 : (12 * f + this.size) / 13;
+                points[j].size = (e + m + 8 * f) / 10;
+                e = 2 * Math.PI / numpoints;
+                m = this.points[j].size;
+                this.isVirus && 0 == j % 2 && (m += 5);
+                points[j].x = this.x + Math.cos(e * j + isvirus) * m;
+                points[j].y = this.y + Math.sin(e * j + isvirus) * m
+            }
+        },
+        updatePos: function () {
+            if (0 == this.id) return 1;
+            var a;
+            a = (timestamp - this.updateTime) / 120;
+            a = 0 > a ? 0 : 1 < a ? 1 : a;
+            var b = 0 > a ? 0 : 1 < a ? 1 : a;
+            this.getNameSize();
+            if (this.destroyed && 1 <= b) {
+                var c = Cells.indexOf(this);
+                -1 != c && Cells.splice(c, 1)
+            }
+            this.x = a * (this.nx - this.ox) + this.ox;
+            this.y = a * (this.ny - this.oy) + this.oy;
+            this.size = b * (this.nSize - this.oSize) + this.oSize;
+            return b;
+        },
+        shouldRender: function () {
+            if (0 == this.id) {
+                return true
+            } else {
+                return !(this.x + this.size + 40 < nodeX - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < nodeY - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > nodeX + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > nodeY + canvasHeight / 2 / viewZoom);
+            }
+        },
+        drawOneCell: function (ctx) {
+            if (this.shouldRender()) {
+                var b = (0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom);
+                if (5 > this.getNumPoints()) b = true;
+                if (this.wasSimpleDrawing && !b)
+                    for (var c = 0; c < this.points.length; c++) this.points[c].size = this.size;
+                this.wasSimpleDrawing = b;
+                ctx.save();
+                this.drawTime = timestamp;
+                c = this.updatePos();
+                this.destroyed && (ctx.globalAlpha *= 1 - c);
+                ctx.lineWidth = 10;
+                ctx.lineCap = "round";
+                ctx.lineJoin = this.isVirus ? "miter" : "round";
+                if (showColor) {
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.strokeStyle = "#AAAAAA";
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.strokeStyle = this.color;
+                }
+                if (b) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI, false);
+                }
+                else {
+                    this.movePoints();
+                    ctx.beginPath();
+                    var d = this.getNumPoints();
+                    ctx.moveTo(this.points[0].x, this.points[0].y);
+                    for (c = 1; c <= d; ++c) {
+                        var e = c % d;
+                        ctx.lineTo(this.points[e].x, this.points[e].y)
+                    }
+                }
+                ctx.closePath();
+                var skinName = this.name.toLowerCase();
+                if (skinName.indexOf('[') != -1) {
+                    var clanStart = skinName.indexOf('[');
+                    var clanEnd = skinName.indexOf(']');
+                    skinName = skinName.slice(clanStart + 1, clanEnd);
+                    //console.log(skinName);
+                }
 
-
-            var delay = 500,
-                oldX = -1,
-                oldY = -1,
-                Canvas = null,
-                z = 1,
-                scoreText = null,
-                skins = {},
-                knownNameDict = "poland;usa;china;russia;canada;australia;spain;brazil;germany;ukraine;france;sweden;hitler;north korea;south korea;japan;united kingdom;earth;greece;latvia;lithuania;estonia;finland;norway;cia;maldivas;austria;nigeria;reddit;yaranaika;confederate;9gag;indiana;4chan;italy;bulgaria;tumblr;2ch.hk;hong kong;portugal;jamaica;german empire;mexico;sanik;switzerland;croatia;chile;indonesia;bangladesh;thailand;iran;iraq;peru;moon;botswana;bosnia;netherlands;european union;taiwan;pakistan;hungary;satanist;qing dynasty;matriarchy;patriarchy;feminism;ireland;texas;facepunch;prodota;cambodia;steam;piccolo;india;kc;denmark;quebec;ayy lmao;sealand;bait;tsarist russia;origin;vinesauce;stalin;belgium;luxembourg;stussy;prussia;8ch;argentina;scotland;sir;romania;belarus;wojak;doge;nasa;byzantium;imperial japan;french kingdom;somalia;turkey;mars;pokerface;8;irs;receita federal;facebook".split(";"),
-                knownNameDict_noDisp = ["8", "nasa"],
-                ib = ["_canvas'blob"];
-            Cell.prototype = {
-                id: 0,
-                points: null,
-                pointsAcc: null,
-                name: null,
-                nameCache: null,
-                sizeCache: null,
-                x: 0,
-                y: 0,
-                size: 0,
-                ox: 0,
-                oy: 0,
-                oSize: 0,
-                nx: 0,
-                ny: 0,
-                nSize: 0,
-                flag: 0, //what does this mean
-                updateTime: 0,
-                updateCode: 0,
-                drawTime: 0,
-                destroyed: false,
-                isVirus: false,
-                isAgitated: false,
-                wasSimpleDrawing: true,
-                destroy: function () {
-                    var tmp;
-                    for (tmp = 0; tmp < nodelist.length; tmp++)
-                        if (nodelist[tmp] == this) {
-                            nodelist.splice(tmp, 1);
-                            break
+                if (!this.isAgitated && showSkin && ':teams' != gameMode) {
+                    if (-1 != knownNameDict.indexOf(skinName)) {
+                        if (!skins.hasOwnProperty(skinName)) {
+                            skins[skinName] = new Image;
+                            skins[skinName].src = SKIN_URL + skinName + '.png';
                         }
-                    delete nodes[this.id];
-                    tmp = playerCells.indexOf(this);
-                    if (-1 != tmp) {
-                        ua = true;
-                        playerCells.splice(tmp, 1);
-                    }
-                    tmp = nodesOnScreen.indexOf(this.id);
-                    if (-1 != tmp) {
-                        nodesOnScreen.splice(tmp, 1);
-                    }
-                    this.destroyed = true;
-                    Cells.push(this)
-                },
-                getNameSize: function () {
-                    return Math.max(~~(.3 * this.size), 24)
-                },
-                setName: function (a) {
-                    if (this.name = a) {
-                        if (null == this.nameCache) {
-                            this.nameCache = new UText(this.getNameSize(), "#FFFFFF", true, "#000000");
-                            this.nameCache.setValue(this.name);
-                        } else {
-                            this.nameCache.setSize(this.getNameSize());
-                            this.nameCache.setValue(this.name);
-                        }
-                    }
-                },
-                createPoints: function () {
-                    for (var samplenum = this.getNumPoints(); this.points.length > samplenum;) {
-                        var rand = ~~(Math.random() * this.points.length);
-                        this.points.splice(rand, 1);
-                        this.pointsAcc.splice(rand, 1)
-                    }
-                    if (0 == this.points.length && 0 < samplenum) {
-                        this.points.push({
-                            ref: this,
-                            size: this.size,
-                            x: this.x,
-                            y: this.y
-                        });
-                        this.pointsAcc.push(Math.random() - .5);
-                    }
-                    while (this.points.length < samplenum) {
-                        var rand2 = ~~(Math.random() * this.points.length),
-                            point = this.points[rand2];
-                        this.points.splice(rand2, 0, {
-                            ref: this,
-                            size: point.size,
-                            x: point.x,
-                            y: point.y
-                        });
-                        this.pointsAcc.splice(rand2, 0, this.pointsAcc[rand2])
-                    }
-                },
-                getNumPoints: function () {
-                    if (0 == this.id) return 16;
-                    var a = 10;
-                    if (20 > this.size) a = 0;
-                    if (this.isVirus) a = 30;
-                    var b = this.size;
-                    if (!this.isVirus) (b *= viewZoom);
-                    b *= z;
-                    if (this.flag & 32) (b *= .25);
-                    return ~~Math.max(b, a);
-                },
-                movePoints: function () {
-                    this.createPoints();
-                    for (var points = this.points, pointsacc = this.pointsAcc, numpoints = points.length, i = 0; i < numpoints; ++i) {
-                        var pos1 = pointsacc[(i - 1 + numpoints) % numpoints],
-                            pos2 = pointsacc[(i + 1) % numpoints];
-                        pointsacc[i] += (Math.random() - .5) * (this.isAgitated ? 3 : 1);
-                        pointsacc[i] *= .7;
-                        10 < pointsacc[i] && (pointsacc[i] = 10);
-                        -10 > pointsacc[i] && (pointsacc[i] = -10);
-                        pointsacc[i] = (pos1 + pos2 + 8 * pointsacc[i]) / 10
-                    }
-                    for (var ref = this, isvirus = this.isVirus ? 0 : (this.id / 1E3 + timestamp / 1E4) % (2 * Math.PI), j = 0; j < numpoints; ++j) {
-                        var f = points[j].size,
-                            e = points[(j - 1 + numpoints) % numpoints].size,
-                            m = points[(j + 1) % numpoints].size;
-                        if (15 < this.size && null != qTree && 20 < this.size * viewZoom && 0 != this.id) {
-                            var l = false,
-                                n = points[j].x,
-                                q = points[j].y;
-                            qTree.retrieve2(n - 5, q - 5, 10, 10, function (a) {
-                                if (a.ref != ref && 25 > (n - a.x) * (n - a.x) + (q - a.y) * (q - a.y)) {
-                                    l = true;
-                                }
-                            });
-                            if (!l && points[j].x < leftPos || points[j].y < topPos || points[j].x > rightPos || points[j].y > bottomPos) {
-                                l = true;
-                            }
-                            if (l) {
-                                if (0 < pointsacc[j]) {
-                                    (pointsacc[j] = 0);
-                                }
-                                pointsacc[j] -= 1;
-                            }
-                        }
-                        f += pointsacc[j];
-                        0 > f && (f = 0);
-                        f = this.isAgitated ? (19 * f + this.size) / 20 : (12 * f + this.size) / 13;
-                        points[j].size = (e + m + 8 * f) / 10;
-                        e = 2 * Math.PI / numpoints;
-                        m = this.points[j].size;
-                        this.isVirus && 0 == j % 2 && (m += 5);
-                        points[j].x = this.x + Math.cos(e * j + isvirus) * m;
-                        points[j].y = this.y + Math.sin(e * j + isvirus) * m
-                    }
-                },
-                updatePos: function () {
-                    if (0 == this.id) return 1;
-                    var a;
-                    a = (timestamp - this.updateTime) / 120;
-                    a = 0 > a ? 0 : 1 < a ? 1 : a;
-                    var b = 0 > a ? 0 : 1 < a ? 1 : a;
-                    this.getNameSize();
-                    if (this.destroyed && 1 <= b) {
-                        var c = Cells.indexOf(this);
-                        -1 != c && Cells.splice(c, 1)
-                    }
-                    this.x = a * (this.nx - this.ox) + this.ox;
-                    this.y = a * (this.ny - this.oy) + this.oy;
-                    this.size = b * (this.nSize - this.oSize) + this.oSize;
-                    return b;
-                },
-                shouldRender: function () {
-                    if (0 == this.id) {
-                        return true
-                    } else {
-                        return !(this.x + this.size + 40 < nodeX - canvasWidth / 2 / viewZoom || this.y + this.size + 40 < nodeY - canvasHeight / 2 / viewZoom || this.x - this.size - 40 > nodeX + canvasWidth / 2 / viewZoom || this.y - this.size - 40 > nodeY + canvasHeight / 2 / viewZoom);
-                    }
-                },
-                drawOneCell: function (ctx) {
-                    if (this.shouldRender()) {
-                        var b = (0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom);
-                        if (5 > this.getNumPoints()) b = true;
-                        if (this.wasSimpleDrawing && !b)
-                            for (var c = 0; c < this.points.length; c++) this.points[c].size = this.size;
-                        this.wasSimpleDrawing = b;
-                        ctx.save();
-                        this.drawTime = timestamp;
-                        c = this.updatePos();
-                        this.destroyed && (ctx.globalAlpha *= 1 - c);
-                        ctx.lineWidth = 10;
-                        ctx.lineCap = "round";
-                        ctx.lineJoin = this.isVirus ? "miter" : "round";
-                        if (showColor) {
-                            ctx.fillStyle = "#FFFFFF";
-                            ctx.strokeStyle = "#AAAAAA";
-                        } else {
-                            ctx.fillStyle = this.color;
-                            ctx.strokeStyle = this.color;
-                        }
-                        if (b) {
-                            ctx.beginPath();
-                            ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI, false);
-                        }
-                        else {
-                            this.movePoints();
-                            ctx.beginPath();
-                            var d = this.getNumPoints();
-                            ctx.moveTo(this.points[0].x, this.points[0].y);
-                            for (c = 1; c <= d; ++c) {
-                                var e = c % d;
-                                ctx.lineTo(this.points[e].x, this.points[e].y)
-                            }
-                        }
-                        ctx.closePath();
-                        var skinName = this.name.toLowerCase();
-                        if (skinName.indexOf('[') != -1) {
-                            var clanStart = skinName.indexOf('[');
-                            var clanEnd = skinName.indexOf(']');
-                            skinName = skinName.slice(clanStart + 1, clanEnd);
-                            //console.log(skinName);
-                        }
-
-                        if (!this.isAgitated && showSkin && ':teams' != gameMode) {
-                            if (-1 != knownNameDict.indexOf(skinName)) {
-                                if (!skins.hasOwnProperty(skinName)) {
-                                    skins[skinName] = new Image;
-                                    skins[skinName].src = SKIN_URL + skinName + '.png';
-                                }
-                                if (0 != skins[skinName].width && skins[skinName].complete) {
-                                    c = skins[skinName];
-                                } else {
-                                    c = null;
-                                }
-                            } else {
-                                c = null;
-                            }
+                        if (0 != skins[skinName].width && skins[skinName].complete) {
+                            c = skins[skinName];
                         } else {
                             c = null;
                         }
-                        c = (e = c) ? -1 != ib.indexOf(skinName) : false;
-                        b || ctx.stroke();
-                        ctx.fill();
-                        if (!(null == e || c)) {
-                            ctx.save();
-                            ctx.clip();
-                            ctx.drawImage(e, this.x - this.size, this.y - this.size, 2 * this.size, 2 * this.size);
-                            ctx.restore();
-                        }
-                        if ((showColor || 15 < this.size) && !b) {
-                            ctx.strokeStyle = '#000000';
-                            ctx.globalAlpha *= .1;
-                            ctx.stroke();
-                        }
-                        ctx.globalAlpha = 1;
-                        if (null != e && c) {
-                            ctx.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
-                        }
-                        c = -1 != playerCells.indexOf(this);
-                        var ncache;
-                        //draw name
-                        if (0 != this.id) {
-                            var b = ~~this.y;
-                            if ((showName || c) && this.name && this.nameCache && (null == e || -1 == knownNameDict_noDisp.indexOf(skinName))) {
-                                ncache = this.nameCache;
-                                ncache.setValue(this.name);
-                                ncache.setSize(this.getNameSize());
-                                var ratio = Math.ceil(10 * viewZoom) / 10;
-                                ncache.setScale(ratio);
-                                var rnchache = ncache.render(),
-                                    m = ~~(rnchache.width / ratio),
-                                    h = ~~(rnchache.height / ratio);
-                                ctx.drawImage(rnchache, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
-                                b += rnchache.height / 2 / ratio + 4
-                            }
-
-                            //draw mass
-                            if (showMass && (c || 0 == playerCells.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
-                                if (null == this.sizeCache) {
-                                    this.sizeCache = new UText(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
-                                }
-                                c = this.sizeCache;
-                                c.setSize(this.getNameSize() / 2);
-                                c.setValue(~~(this.size * this.size / 100));
-                                ratio = Math.ceil(10 * viewZoom) / 10;
-                                c.setScale(ratio);
-                                e = c.render();
-                                m = ~~(e.width / ratio);
-                                h = ~~(e.height / ratio);
-                                ctx.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
-                            }
-                        }
-                        ctx.restore()
+                    } else {
+                        c = null;
                     }
+                } else {
+                    c = null;
                 }
-            };
-            UText.prototype = {
-                _value: "",
-                _color: "#000000",
-                _stroke: false,
-                _strokeColor: "#000000",
-                _size: 16,
-                _canvas: null,
-                _ctx: null,
-                _dirty: false,
-                _scale: 1,
-                setSize: function (a) {
-                    if (this._size != a) {
-                        this._size = a;
-                        this._dirty = true;
-                    }
-                },
-                setScale: function (a) {
-                    if (this._scale != a) {
-                        this._scale = a;
-                        this._dirty = true;
-                    }
-                },
-                setStrokeColor: function (a) {
-                    if (this._strokeColor != a) {
-                        this._strokeColor = a;
-                        this._dirty = true;
-                    }
-                },
-                setValue: function (a) {
-                    if (a != this._value) {
-                        this._value = a;
-                        this._dirty = true;
-                    }
-                },
-                render: function () {
-                    if (null == this._canvas) {
-                        this._canvas = document.createElement("canvas");
-                        this._ctx = this._canvas.getContext("2d");
-                    }
-                    if (this._dirty) {
-                        this._dirty = false;
-                        var canvas = this._canvas,
-                            ctx = this._ctx,
-                            value = this._value,
-                            scale = this._scale,
-                            fontsize = this._size,
-                            font = fontsize + 'px Ubuntu';
-                        ctx.font = font;
-                        var h = ~~(.2 * fontsize);
-                        canvas.width = (ctx.measureText(value).width +
-                            6) * scale;
-                        canvas.height = (fontsize + h) * scale;
-                        ctx.font = font;
-                        ctx.scale(scale, scale);
-                        ctx.globalAlpha = 1;
-                        ctx.lineWidth = 3;
-                        ctx.strokeStyle = this._strokeColor;
-                        ctx.fillStyle = this._color;
-                        this._stroke && ctx.strokeText(value, 3, fontsize - h / 2);
-                        ctx.fillText(value, 3, fontsize - h / 2)
-                    }
-                    return this._canvas
-                },
-                getWidth: function () {
-                    return (ctx.measureText(this._value).width +
-                    6);
-                }
-            };
-            Date.now || (Date.now = function () {
-                return (new Date).getTime()
-            });
-            var Quad = {
-                init: function (args) {
-                    function Node(x, y, w, h, depth) {
-                        this.x = x;
-                        this.y = y;
-                        this.w = w;
-                        this.h = h;
-                        this.depth = depth;
-                        this.items = [];
-                        this.nodes = []
-                    }
-
-                    var c = args.maxChildren || 2,
-                        d = args.maxDepth || 4;
-                    Node.prototype = {
-                        x: 0,
-                        y: 0,
-                        w: 0,
-                        h: 0,
-                        depth: 0,
-                        items: null,
-                        nodes: null,
-                        exists: function (selector) {
-                            for (var i = 0; i < this.items.length; ++i) {
-                                var item = this.items[i];
-                                if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.w && item.y < selector.y + selector.h) return true
-                            }
-                            if (0 != this.nodes.length) {
-                                var self = this;
-                                return this.findOverlappingNodes(selector, function (dir) {
-                                    return self.nodes[dir].exists(selector)
-                                })
-                            }
-                            return false;
-                        },
-                        retrieve: function (item, callback) {
-                            for (var i = 0; i < this.items.length; ++i) callback(this.items[i]);
-                            if (0 != this.nodes.length) {
-                                var self = this;
-                                this.findOverlappingNodes(item, function (dir) {
-                                    self.nodes[dir].retrieve(item, callback)
-                                })
-                            }
-                        },
-                        insert: function (a) {
-                            if (0 != this.nodes.length) {
-                                this.nodes[this.findInsertNode(a)].insert(a);
-                            } else {
-                                if (this.items.length >= c && this.depth < d) {
-                                    this.devide();
-                                    this.nodes[this.findInsertNode(a)].insert(a);
-                                } else {
-                                    this.items.push(a);
-                                }
-                            }
-                        },
-                        findInsertNode: function (a) {
-                            return a.x < this.x + this.w / 2 ? a.y < this.y + this.h / 2 ? 0 : 2 : a.y < this.y + this.h / 2 ? 1 : 3
-                        },
-                        findOverlappingNodes: function (a, b) {
-                            return a.x < this.x + this.w / 2 && (a.y < this.y + this.h / 2 && b(0) || a.y >= this.y + this.h / 2 && b(2)) || a.x >= this.x + this.w / 2 && (a.y < this.y + this.h / 2 && b(1) || a.y >= this.y + this.h / 2 && b(3)) ? true : false
-                        },
-                        devide: function () {
-                            var a = this.depth + 1,
-                                c = this.w / 2,
-                                d = this.h / 2;
-                            this.nodes.push(new Node(this.x, this.y, c, d, a));
-                            this.nodes.push(new Node(this.x + c, this.y, c, d, a));
-                            this.nodes.push(new Node(this.x, this.y + d, c, d, a));
-                            this.nodes.push(new Node(this.x + c, this.y + d, c, d, a));
-                            a = this.items;
-                            this.items = [];
-                            for (c = 0; c < a.length; c++) this.insert(a[c])
-                        },
-                        clear: function () {
-                            for (var a = 0; a < this.nodes.length; a++) this.nodes[a].clear();
-                            this.items.length = 0;
-                            this.nodes.length = 0
-                        }
-                    };
-                    var internalSelector = {
-                        x: 0,
-                        y: 0,
-                        w: 0,
-                        h: 0
-                    };
-                    return {
-                        root: new Node(args.minX, args.minY, args.maxX - args.minX, args.maxY - args.minY, 0),
-                        insert: function (a) {
-                            this.root.insert(a)
-                        },
-                        retrieve: function (a, b) {
-                            this.root.retrieve(a, b)
-                        },
-                        retrieve2: function (a, b, c, d, callback) {
-                            internalSelector.x = a;
-                            internalSelector.y = b;
-                            internalSelector.w = c;
-                            internalSelector.h = d;
-                            this.root.retrieve(internalSelector, callback)
-                        },
-                        exists: function (a) {
-                            return this.root.exists(a)
-                        },
-                        clear: function () {
-                            this.root.clear()
-                        }
-                    }
-                }
-            };
-            wjQuery(function () {
-                function renderFavicon() {
-                    if (0 < playerCells.length) {
-                        redCell.color = playerCells[0].color;
-                        redCell.setName(playerCells[0].name);
-                    }
-                    ctx.clearRect(0, 0, 32, 32);
+                c = (e = c) ? -1 != ib.indexOf(skinName) : false;
+                b || ctx.stroke();
+                ctx.fill();
+                if (!(null == e || c)) {
                     ctx.save();
-                    ctx.translate(16, 16);
-                    ctx.scale(.4, .4);
-                    redCell.drawOneCell(ctx);
+                    ctx.clip();
+                    ctx.drawImage(e, this.x - this.size, this.y - this.size, 2 * this.size, 2 * this.size);
                     ctx.restore();
-                    var favicon = document.getElementById("favicon"),
-                        oldfavicon = favicon.cloneNode(true);
-                    oldfavicon.setAttribute("href", favCanvas.toDataURL("image/png"));
-                    favicon.parentNode.replaceChild(oldfavicon, favicon)
                 }
+                if ((showColor || 15 < this.size) && !b) {
+                    ctx.strokeStyle = '#000000';
+                    ctx.globalAlpha *= .1;
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+                if (null != e && c) {
+                    ctx.drawImage(e, this.x - 2 * this.size, this.y - 2 * this.size, 4 * this.size, 4 * this.size);
+                }
+                c = -1 != playerCells.indexOf(this);
+                var ncache;
+                //draw name
+                if (0 != this.id) {
+                    var b = ~~this.y;
+                    if ((showName || c) && this.name && this.nameCache && (null == e || -1 == knownNameDict_noDisp.indexOf(skinName))) {
+                        ncache = this.nameCache;
+                        ncache.setValue(this.name);
+                        ncache.setSize(this.getNameSize());
+                        var ratio = Math.ceil(10 * viewZoom) / 10;
+                        ncache.setScale(ratio);
+                        var rnchache = ncache.render(),
+                            m = ~~(rnchache.width / ratio),
+                            h = ~~(rnchache.height / ratio);
+                        ctx.drawImage(rnchache, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
+                        b += rnchache.height / 2 / ratio + 4
+                    }
 
-                var redCell = new Cell(0, 0, 0, 32, "#ED1C24", ""),
-                    favCanvas = document.createElement("canvas");
-                favCanvas.width = 32;
-                favCanvas.height = 32;
-                var ctx = favCanvas.getContext("2d");
-                renderFavicon();
-                setInterval(renderFavicon, 1E3);
-                setInterval(drawChatBoard, 1E3);
-            });
-            wHandle.onload = gameLoop
+                    //draw mass
+                    if (showMass && (c || 0 == playerCells.length && (!this.isVirus || this.isAgitated) && 20 < this.size)) {
+                        if (null == this.sizeCache) {
+                            this.sizeCache = new UText(this.getNameSize() / 2, "#FFFFFF", true, "#000000")
+                        }
+                        c = this.sizeCache;
+                        c.setSize(this.getNameSize() / 2);
+                        c.setValue(~~(this.size * this.size / 100));
+                        ratio = Math.ceil(10 * viewZoom) / 10;
+                        c.setScale(ratio);
+                        e = c.render();
+                        m = ~~(e.width / ratio);
+                        h = ~~(e.height / ratio);
+                        ctx.drawImage(e, ~~this.x - ~~(m / 2), b - ~~(h / 2), m, h);
+                    }
+                }
+                ctx.restore()
+            }
         }
-    }
+    };
+    UText.prototype = {
+        _value: "",
+        _color: "#000000",
+        _stroke: false,
+        _strokeColor: "#000000",
+        _size: 16,
+        _canvas: null,
+        _ctx: null,
+        _dirty: false,
+        _scale: 1,
+        setSize: function (a) {
+            if (this._size != a) {
+                this._size = a;
+                this._dirty = true;
+            }
+        },
+        setScale: function (a) {
+            if (this._scale != a) {
+                this._scale = a;
+                this._dirty = true;
+            }
+        },
+        setStrokeColor: function (a) {
+            if (this._strokeColor != a) {
+                this._strokeColor = a;
+                this._dirty = true;
+            }
+        },
+        setValue: function (a) {
+            if (a != this._value) {
+                this._value = a;
+                this._dirty = true;
+            }
+        },
+        render: function () {
+            if (null == this._canvas) {
+                this._canvas = document.createElement("canvas");
+                this._ctx = this._canvas.getContext("2d");
+            }
+            if (this._dirty) {
+                this._dirty = false;
+                var canvas = this._canvas,
+                    ctx = this._ctx,
+                    value = this._value,
+                    scale = this._scale,
+                    fontsize = this._size,
+                    font = fontsize + 'px Ubuntu';
+                ctx.font = font;
+                var h = ~~(.2 * fontsize);
+                canvas.width = (ctx.measureText(value).width +
+                    6) * scale;
+                canvas.height = (fontsize + h) * scale;
+                ctx.font = font;
+                ctx.scale(scale, scale);
+                ctx.globalAlpha = 1;
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = this._strokeColor;
+                ctx.fillStyle = this._color;
+                this._stroke && ctx.strokeText(value, 3, fontsize - h / 2);
+                ctx.fillText(value, 3, fontsize - h / 2)
+            }
+            return this._canvas
+        },
+        getWidth: function () {
+            return (ctx.measureText(this._value).width +
+            6);
+        }
+    };
+    Date.now || (Date.now = function () {
+        return (new Date).getTime()
+    });
+    var Quad = {
+        init: function (args) {
+            function Node(x, y, w, h, depth) {
+                this.x = x;
+                this.y = y;
+                this.w = w;
+                this.h = h;
+                this.depth = depth;
+                this.items = [];
+                this.nodes = []
+            }
+
+            var c = args.maxChildren || 2,
+                d = args.maxDepth || 4;
+            Node.prototype = {
+                x: 0,
+                y: 0,
+                w: 0,
+                h: 0,
+                depth: 0,
+                items: null,
+                nodes: null,
+                exists: function (selector) {
+                    for (var i = 0; i < this.items.length; ++i) {
+                        var item = this.items[i];
+                        if (item.x >= selector.x && item.y >= selector.y && item.x < selector.x + selector.w && item.y < selector.y + selector.h) return true
+                    }
+                    if (0 != this.nodes.length) {
+                        var self = this;
+                        return this.findOverlappingNodes(selector, function (dir) {
+                            return self.nodes[dir].exists(selector)
+                        })
+                    }
+                    return false;
+                },
+                retrieve: function (item, callback) {
+                    for (var i = 0; i < this.items.length; ++i) callback(this.items[i]);
+                    if (0 != this.nodes.length) {
+                        var self = this;
+                        this.findOverlappingNodes(item, function (dir) {
+                            self.nodes[dir].retrieve(item, callback)
+                        })
+                    }
+                },
+                insert: function (a) {
+                    if (0 != this.nodes.length) {
+                        this.nodes[this.findInsertNode(a)].insert(a);
+                    } else {
+                        if (this.items.length >= c && this.depth < d) {
+                            this.devide();
+                            this.nodes[this.findInsertNode(a)].insert(a);
+                        } else {
+                            this.items.push(a);
+                        }
+                    }
+                },
+                findInsertNode: function (a) {
+                    return a.x < this.x + this.w / 2 ? a.y < this.y + this.h / 2 ? 0 : 2 : a.y < this.y + this.h / 2 ? 1 : 3
+                },
+                findOverlappingNodes: function (a, b) {
+                    return a.x < this.x + this.w / 2 && (a.y < this.y + this.h / 2 && b(0) || a.y >= this.y + this.h / 2 && b(2)) || a.x >= this.x + this.w / 2 && (a.y < this.y + this.h / 2 && b(1) || a.y >= this.y + this.h / 2 && b(3)) ? true : false
+                },
+                devide: function () {
+                    var a = this.depth + 1,
+                        c = this.w / 2,
+                        d = this.h / 2;
+                    this.nodes.push(new Node(this.x, this.y, c, d, a));
+                    this.nodes.push(new Node(this.x + c, this.y, c, d, a));
+                    this.nodes.push(new Node(this.x, this.y + d, c, d, a));
+                    this.nodes.push(new Node(this.x + c, this.y + d, c, d, a));
+                    a = this.items;
+                    this.items = [];
+                    for (c = 0; c < a.length; c++) this.insert(a[c])
+                },
+                clear: function () {
+                    for (var a = 0; a < this.nodes.length; a++) this.nodes[a].clear();
+                    this.items.length = 0;
+                    this.nodes.length = 0
+                }
+            };
+            var internalSelector = {
+                x: 0,
+                y: 0,
+                w: 0,
+                h: 0
+            };
+            return {
+                root: new Node(args.minX, args.minY, args.maxX - args.minX, args.maxY - args.minY, 0),
+                insert: function (a) {
+                    this.root.insert(a)
+                },
+                retrieve: function (a, b) {
+                    this.root.retrieve(a, b)
+                },
+                retrieve2: function (a, b, c, d, callback) {
+                    internalSelector.x = a;
+                    internalSelector.y = b;
+                    internalSelector.w = c;
+                    internalSelector.h = d;
+                    this.root.retrieve(internalSelector, callback)
+                },
+                exists: function (a) {
+                    return this.root.exists(a)
+                },
+                clear: function () {
+                    this.root.clear()
+                }
+            }
+        }
+    };
+    wjQuery(function () {
+        function renderFavicon() {
+            if (0 < playerCells.length) {
+                redCell.color = playerCells[0].color;
+                redCell.setName(playerCells[0].name);
+            }
+            ctx.clearRect(0, 0, 32, 32);
+            ctx.save();
+            ctx.translate(16, 16);
+            ctx.scale(.4, .4);
+            redCell.drawOneCell(ctx);
+            ctx.restore();
+            var favicon = document.getElementById("favicon"),
+                oldfavicon = favicon.cloneNode(true);
+            oldfavicon.setAttribute("href", favCanvas.toDataURL("image/png"));
+            favicon.parentNode.replaceChild(oldfavicon, favicon)
+        }
+
+        var redCell = new Cell(0, 0, 0, 32, "#ED1C24", ""),
+            favCanvas = document.createElement("canvas");
+        favCanvas.width = 32;
+        favCanvas.height = 32;
+        var ctx = favCanvas.getContext("2d");
+        renderFavicon();
+        setInterval(renderFavicon, 1E3);
+        setInterval(drawChatBoard, 1E3);
+    });
+    wHandle.onload = gameLoop
 //console.log(knownNameDict);
 })(window, window.jQuery);
