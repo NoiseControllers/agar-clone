@@ -282,9 +282,7 @@
             ws = null
         }
         var c = CONNECTION_URL;
-        if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/.test(c) && 5 != +c.split(".")[0]) {
-            wsUrl = "ws://" + c;
-        }
+        wsUrl = "ws://" + c;
         if (localProtocolHttps) {
             wsUrl = wsUrl.split(":");
             wsUrl = wsUrl[0] + "_strokeColor://ip-" + wsUrl[1].replace(/\./g, "-").replace(/\//g, "") + ".tech.agar.io:" + (+wsUrl[2] + 2E3);
