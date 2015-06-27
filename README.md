@@ -13,7 +13,8 @@ This is a clone of agar.io. In this project we aim to acheive the following.
 
 ##Setup
 
-You can use nginx that support PHP to deploy it on your server. 
+Copy all files to a server with PHP support (e.g. LEMP/LAMP). To check whether your server supports PHP, please read [this tutorial](http://www.cyberciti.biz/faq/how-do-i-test-php-installation-with-a-phpinfo-page/).
+Once everything is set up, open index.html in your browser. If everything is working well, go to the next section to use your own Ogar server.
 
 ### Support your server
 Replace the CONNECTION_URL with your own ip and port in main_out.js
