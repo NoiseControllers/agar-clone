@@ -992,7 +992,7 @@
                 var ctx = lbCanvas.getContext("2d"),
                     boardLength = 60;
                 boardLength = null == teamScores ? boardLength + 24 * leaderBoard.length : boardLength + 180;
-                var scaleFactor = Math.min(0.3*canvasHeight, Math.min(200, .3 * canvasWidth)) / 200;
+                var scaleFactor = Math.min(0.22*canvasHeight, Math.min(200, .3 * canvasWidth)) / 200;
                 lbCanvas.width = 200 * scaleFactor;
                 lbCanvas.height = boardLength * scaleFactor;
 
