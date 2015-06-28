@@ -491,7 +491,7 @@
 
         chatCanvas = document.createElement("canvas");
         var ctx = chatCanvas.getContext("2d");
-        var scaleFactor = Math.max(canvasWidth / 1200, 0.75);
+        var scaleFactor = Math.min(Math.max(canvasWidth / 1200, 0.75),1); //scale factor = 0.75 to 1
         chatCanvas.width = 1000 * scaleFactor;
         chatCanvas.height = 550 * scaleFactor;
         ctx.scale(scaleFactor, scaleFactor);
