@@ -18,12 +18,11 @@
         touchable = 'createTouch' in document,
         touches = []; // array of touch vectors
 
-    var halfWidth,
-        halfHeight,
-        leftTouchID = -1,
+    var leftTouchID = -1,
         leftTouchPos = new Vector2(0,0),
         leftTouchStartPos = new Vector2(0,0),
         leftVector = new Vector2(0,0);
+
 
 
     function gameLoop() {
@@ -1119,6 +1118,7 @@
     ejectIcon.src = "feed.png";
     var wCanvas = document.createElement("canvas");
     var playerStat = null;
+    wHandle.isSpectating = false;
     wHandle.setNick = function (arg) {
         hideOverlays();
         userNickName = arg;
@@ -1143,6 +1143,7 @@
     };
     wHandle.spectate = function () {
         userNickName = null;
+        wHandle.isSpectating = true;
         sendUint8(1);
         hideOverlays()
     };

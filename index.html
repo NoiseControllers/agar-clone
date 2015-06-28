@@ -282,6 +282,7 @@ Press <b>W</b> to eject some mass<br/>
     $('input').keypress(function(e) {
         if (e.which == '13') {
             e.preventDefault();
+            if (!isSpectating)
             setNick(document.getElementById('nick').value);
         }
     });
