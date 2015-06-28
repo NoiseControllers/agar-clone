@@ -12,6 +12,20 @@
      */
     var SKIN_URL = "./skins/";//skins folder
 
+
+    var touchX, touchY,
+    // is this running in a touch capable environment?
+        touchable = 'createTouch' in document,
+        touches = []; // array of touch vectors
+
+    var halfWidth,
+        halfHeight,
+        leftTouchID = -1,
+        leftTouchPos = new Vector2(0,0),
+        leftTouchStartPos = new Vector2(0,0),
+        leftVector = new Vector2(0,0);
+
+
     function gameLoop() {
         ma = true;
         document.getElementById("canvas").focus();
@@ -21,7 +35,7 @@
         setInterval(getServerList, 18E4);
         mainCanvas = nCanvas = document.getElementById("canvas");
         ctx = mainCanvas.getContext("2d");
-        mainCanvas.onmousedown = function (event) {
+        /*mainCanvas.onmousedown = function (event) {
             if (isTouchStart) {
                 var xOffset = event.clientX - (5 + canvasWidth / 5 / 2),
                     yOffset = event.clientY - (5 + canvasWidth / 5 / 2);
@@ -32,16 +46,25 @@
                 }
             }
 
+
             rawMouseX = event.clientX;
             rawMouseY = event.clientY;
             mouseCoordinateChange();
             sendMouseMove()
-        };
+        };*/
         mainCanvas.onmousemove = function (event) {
             rawMouseX = event.clientX;
             rawMouseY = event.clientY;
             mouseCoordinateChange()
         };
+
+
+        if(touchable) {
+            mainCanvas.addEventListener( 'touchstart', onTouchStart, false );
+            mainCanvas.addEventListener( 'touchmove', onTouchMove, false );
+            mainCanvas.addEventListener( 'touchend', onTouchEnd, false );
+             }
+
         mainCanvas.onmouseup = function () {
         };
         if (/firefox/i.test(navigator.userAgent)) {
@@ -146,6 +169,76 @@
         null == ws && w && showConnecting();
         wjQuery("#overlays").show();
 
+    }
+
+
+
+
+    function onTouchStart(e) {
+
+        for(var i = 0; i<e.changedTouches.length; i++){
+            var touch =e.changedTouches[i];
+            //console.log(leftTouchID + " "
+            if((leftTouchID<0) && (touch.clientX<canvasWidth/2))
+            {
+                leftTouchID = touch.identifier;
+                leftTouchStartPos.reset(touch.clientX, touch.clientY);
+                leftTouchPos.copyFrom(leftTouchStartPos);
+                //leftVector.reset(0,0);
+            }
+
+            var size = ~~ (canvasWidth / 7);
+            if ((touch.clientX > canvasWidth - size) && (touch.clientY > canvasHeight - size)) {
+                sendMouseMove();
+                sendUint8(17); //split
+            }
+
+            if ((touch.clientX > canvasWidth - size) && (touch.clientY > canvasHeight - 2*size -10) && (touch.clientY < canvasHeight - size -10 )) {
+                sendMouseMove();
+                sendUint8(21); //eject
+            }
+
+
+
+        }
+        touches = e.touches;
+    }
+
+    function onTouchMove(e) {
+        // Prevent the browser from doing its default thing (scroll, zoom)
+        e.preventDefault();
+
+        for(var i = 0; i<e.changedTouches.length; i++){
+            var touch =e.changedTouches[i];
+            if(leftTouchID == touch.identifier)
+            {
+                leftTouchPos.reset(touch.clientX, touch.clientY);
+                leftVector.copyFrom(leftTouchPos);
+                leftVector.minusEq(leftTouchStartPos);
+                rawMouseX = leftVector.x*3 + canvasWidth/2;
+                rawMouseY = leftVector.y*3 + canvasHeight/2;
+                mouseCoordinateChange();
+                sendMouseMove();
+            }
+        }
+
+        touches = e.touches;
+
+    }
+
+    function onTouchEnd(e) {
+
+        touches = e.touches;
+
+        for(var i = 0; i<e.changedTouches.length; i++){
+            var touch =e.changedTouches[i];
+            if(leftTouchID == touch.identifier)
+            {
+                leftTouchID = -1;
+                //leftVector.reset(0,0);
+                break;
+            }
+        }
     }
 
 
@@ -682,6 +775,7 @@
     }
 
     function canvasResize() {
+        window.scrollTo(0,0);
         canvasWidth = wHandle.innerWidth;
         canvasHeight = wHandle.innerHeight;
         nCanvas.width = canvasWidth;
@@ -790,7 +884,9 @@
             ctx.globalAlpha = 1;
             ctx.drawImage(c, 15, 15);//canvasHeight - 10 - 24 - 5
         }
-        drawSplitIcon();
+        drawSplitIcon(ctx);
+
+        drawTouch(ctx);
         //drawChatBoard();
         var deltatime = Date.now() - oldtime;
         deltatime > 1E3 / 60 ? z -= .01 : deltatime < 1E3 / 65 && (z += .01);
@@ -798,6 +894,53 @@
         1 < z && (z = 1)
     }
 
+
+    function drawTouch(ctx)
+    {
+        ctx.save();
+        if(touchable) {
+
+            for(var i=0; i<touches.length; i++) {
+
+                var touch = touches[i];
+
+                if(touch.identifier == leftTouchID){
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#0096ff";
+                    ctx.lineWidth = 6;
+                    ctx.arc(leftTouchStartPos.x, leftTouchStartPos.y, 40,0,Math.PI*2,true);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#0096ff";
+                    ctx.lineWidth = 2;
+                    ctx.arc(leftTouchStartPos.x, leftTouchStartPos.y, 60,0,Math.PI*2,true);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#0096ff";
+                    ctx.arc(leftTouchPos.x, leftTouchPos.y, 40, 0,Math.PI*2, true);
+                    ctx.stroke();
+
+                } else {
+
+                    ctx.beginPath();
+                    //ctx.fillStyle = "#0096ff";
+                    //ctx.fillText("touch id : "+touch.identifier+" x:"+touch.clientX+" y:"+touch.clientY, touch.clientX+30, touch.clientY-30);
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#0096ff";
+                    ctx.lineWidth = "6";
+                    ctx.arc(touch.clientX, touch.clientY, 40, 0, Math.PI*2, true);
+                    ctx.stroke();
+                }
+            }
+        } else {
+
+            //ctx.fillStyle	 = "white";
+            //ctx.fillText("mouse : "+touchX+", "+touchY, touchX, touchY);
+        }
+        //c.fillText("hello", 0,0);
+        ctx.restore();
+    }
     function drawGrid() {
         ctx.fillStyle = showDarkTheme ? "#111111" : "#F2FBFF";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -822,11 +965,18 @@
         ctx.restore()
     }
 
-    function drawSplitIcon() {
-        /*if (isTouchStart && splitIcon.width) {
-         var size = canvasWidth / 5;
-         ctx.drawImage(splitIcon, 5, 5, size, size)
-         }*/
+    function drawSplitIcon(ctx) {
+        if (isTouchStart && splitIcon.width) {
+         var size = ~~ (canvasWidth / 7);
+         ctx.drawImage(splitIcon, canvasWidth - size, canvasHeight - size, size, size);
+        }
+
+        if (isTouchStart && splitIcon.width) {
+            var size = ~~ (canvasWidth / 7);
+            ctx.drawImage(ejectIcon, canvasWidth - size, canvasHeight - 2*size-10, size, size);
+        }
+
+
     }
 
     function calcUserScore() {
@@ -842,7 +992,7 @@
                 var ctx = lbCanvas.getContext("2d"),
                     boardLength = 60;
                 boardLength = null == teamScores ? boardLength + 24 * leaderBoard.length : boardLength + 180;
-                var scaleFactor = Math.min(200, .3 * canvasWidth) / 200;
+                var scaleFactor = Math.min(0.3*canvasHeight, Math.min(200, .3 * canvasWidth)) / 200;
                 lbCanvas.width = 200 * scaleFactor;
                 lbCanvas.height = boardLength * scaleFactor;
 
@@ -963,8 +1113,10 @@
         zoom = 1,
         isTouchStart = "ontouchstart" in wHandle && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
         splitIcon = new Image,
+        ejectIcon = new Image,
         noRanking = false;
-    splitIcon.src = "http://agar.io/img/split.png";
+    splitIcon.src = "split.png";
+    ejectIcon.src = "feed.png";
     var wCanvas = document.createElement("canvas");
     var playerStat = null;
     wHandle.setNick = function (arg) {
@@ -1537,6 +1689,10 @@
             }
         }
     };
+
+
+
+
     wjQuery(function () {
         function renderFavicon() {
             if (0 < playerCells.length) {
