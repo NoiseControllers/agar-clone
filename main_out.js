@@ -184,7 +184,7 @@
                 leftTouchID = touch.identifier;
                 leftTouchStartPos.reset(touch.clientX, touch.clientY);
                 leftTouchPos.copyFrom(leftTouchStartPos);
-                //leftVector.reset(0,0);
+                leftVector.reset(0,0);
             }
 
             var size = ~~ (canvasWidth / 7);
@@ -235,7 +235,7 @@
             if(leftTouchID == touch.identifier)
             {
                 leftTouchID = -1;
-                //leftVector.reset(0,0);
+                leftVector.reset(0,0);
                 break;
             }
         }
