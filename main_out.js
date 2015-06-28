@@ -102,8 +102,10 @@
 
                     }
                     else {
-                        document.getElementById("chat_textbox").focus();
-                        isTyping = true;
+                        if (!hasOverlay) {
+                            document.getElementById("chat_textbox").focus();
+                            isTyping = true;
+                        }
                     }
             }
         };
@@ -143,6 +145,7 @@
         setRegion(wjQuery("#region").val());
         null == ws && w && showConnecting();
         wjQuery("#overlays").show();
+
     }
 
 
@@ -217,6 +220,7 @@
     }
 
     function hideOverlays() {
+        hasOverlay = false;
         wjQuery("#adsBottom").hide();
         wjQuery("#overlays").hide();
         Ha()
@@ -236,6 +240,7 @@
     }
 
     function showOverlays(arg) {
+        hasOverlay = true;
         userNickName = null;
         wjQuery("#overlays").fadeIn(arg ? 200 : 3E3);
         arg || wjQuery("#adsBottom").fadeIn(3E3)
@@ -946,6 +951,7 @@
         gameMode = "",
         teamScores = null,
         ma = false,
+        hasOverlay = true,
         drawLine = false,
         lineX = 0,
         lineY = 0,
