@@ -868,8 +868,10 @@
         }
         ctx.restore();
         lbCanvas && lbCanvas.width && ctx.drawImage(lbCanvas, canvasWidth - lbCanvas.width - 10, 10); // draw Leader Board
-        if (chatCanvas != null) ctx.drawImage(chatCanvas, 0, canvasHeight - chatCanvas.height - 50); // draw Leader Board
-
+        if (!hideChat)
+        {
+            if (chatCanvas != null) ctx.drawImage(chatCanvas, 0, canvasHeight - chatCanvas.height - 50); // draw Chat Board
+        }
         userScore = Math.max(userScore, calcUserScore());
         if (0 != userScore) {
             if (null == scoreText) {
@@ -974,7 +976,7 @@
             var size = ~~ (canvasWidth / 7);
             ctx.drawImage(ejectIcon, canvasWidth - size, canvasHeight - 2*size-10, size, size);
         }
-        
+
     }
 
     function calcUserScore() {
@@ -1093,6 +1095,7 @@
         userScore = 0,
         showDarkTheme = false,
         showMass = false,
+        hideChat = false,
         posX = nodeX = ~~((leftPos + rightPos) / 2),
         posY = nodeY = ~~((topPos + bottomPos) / 2),
         posSize = 1,
@@ -1139,6 +1142,15 @@
     };
     wHandle.setShowMass = function (arg) {
         showMass = arg
+    };
+    wHandle.setHideChat = function (arg) {
+        hideChat = arg;
+        if (arg) {
+            wjQuery("#chat_textbox").hide();
+        }
+        else {
+            wjQuery("#chat_textbox").show();
+        }
     };
     wHandle.spectate = function () {
         userNickName = null;
