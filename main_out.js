@@ -1102,6 +1102,7 @@
         userScore = 0,
         showDarkTheme = false,
         showMass = false,
+        smoothRender = .4,
         hideChat = false,
         posX = nodeX = ~~((leftPos + rightPos) / 2),
         posY = nodeY = ~~((topPos + bottomPos) / 2),
@@ -1150,6 +1151,9 @@
     wHandle.setShowMass = function (arg) {
         showMass = arg
     };
+    wHandle.setSmooth = function (arg) {
++        smoothRender = arg ? 2 : .4
++    };
     wHandle.setHideChat = function (arg) {
         hideChat = arg;
         if (arg) {
@@ -1412,7 +1416,7 @@
         },
         drawOneCell: function (ctx) {
             if (this.shouldRender()) {
-                var b = (0 != this.id && !this.isVirus && !this.isAgitated && .4 > viewZoom);
+                var b = (0 != this.id && !this.isVirus && !this.isAgitated && smoothRender > viewZoom);
                 if (5 > this.getNumPoints()) b = true;
                 if (this.wasSimpleDrawing && !b)
                     for (var c = 0; c < this.points.length; c++) this.points[c].size = this.size;
