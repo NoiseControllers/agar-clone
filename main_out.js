@@ -174,6 +174,7 @@
 
 
 
+
     function onTouchStart(e) {
 
         for(var i = 0; i<e.changedTouches.length; i++){
@@ -774,12 +775,18 @@
         wHandle.requestAnimationFrame(redrawGameScene)
     }
 
+
     function canvasResize() {
         window.scrollTo(0,0);
         canvasWidth = wHandle.innerWidth;
         canvasHeight = wHandle.innerHeight;
         nCanvas.width = canvasWidth;
         nCanvas.height = canvasHeight;
+
+        var hello = wjQuery("#helloDialog");
+        hello.css("transform", "none");
+        var modalHeight = hello.height();
+        modalHeight > canvasHeight / 1.1 ? hello.css("transform", "translate(-50%, -50%) scale(" + canvasHeight / modalHeight / 1.1 + ")") : hello.css("transform", "translate(-50%, -50%)");
         drawGameScene()
     }
 
