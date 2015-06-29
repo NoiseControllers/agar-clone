@@ -1152,8 +1152,8 @@
         showMass = arg
     };
     wHandle.setSmooth = function (arg) {
-+        smoothRender = arg ? 2 : .4
-+    };
+        smoothRender = arg ? 2 : .4
+    };
     wHandle.setHideChat = function (arg) {
         hideChat = arg;
         if (arg) {
