@@ -112,6 +112,7 @@
                     break;
                 case 27: // quit
                     showOverlays(true);
+                    wHandle.isSpectating = false;
                     break;
 
                 case 13:
@@ -884,7 +885,6 @@
             ctx.drawImage(c, 15, 15);//canvasHeight - 10 - 24 - 5
         }
         drawSplitIcon(ctx);
-
         drawTouch(ctx);
         //drawChatBoard();
         var deltatime = Date.now() - oldtime;
@@ -965,17 +965,16 @@
     }
 
     function drawSplitIcon(ctx) {
-        if (isTouchStart && splitIcon.width) {
+        if (touchable && splitIcon.width) {
          var size = ~~ (canvasWidth / 7);
          ctx.drawImage(splitIcon, canvasWidth - size, canvasHeight - size, size, size);
         }
 
-        if (isTouchStart && splitIcon.width) {
+        if (touchable && splitIcon.width) {
             var size = ~~ (canvasWidth / 7);
             ctx.drawImage(ejectIcon, canvasWidth - size, canvasHeight - 2*size-10, size, size);
         }
-
-
+        
     }
 
     function calcUserScore() {
