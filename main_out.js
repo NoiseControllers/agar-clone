@@ -587,8 +587,7 @@
     }
 
     function drawChatBoard() {
-        //chatCanvas = null;
-
+        chatCanvas = null;
         chatCanvas = document.createElement("canvas");
         var ctx = chatCanvas.getContext("2d");
         var scaleFactor = Math.min(Math.max(canvasWidth / 1200, 0.75),1); //scale factor = 0.75 to 1
@@ -878,7 +877,7 @@
         lbCanvas && lbCanvas.width && ctx.drawImage(lbCanvas, canvasWidth - lbCanvas.width - 10, 10); // draw Leader Board
         if (!hideChat)
         {
-            if (chatCanvas != null) ctx.drawImage(chatCanvas, 0, canvasHeight - chatCanvas.height - 50); // draw Chat Board
+            if ((chatCanvas != null)&&(chatCanvas.width > 0)) ctx.drawImage(chatCanvas, 0, canvasHeight - chatCanvas.height - 50); // draw Chat Board
         }
         userScore = Math.max(userScore, calcUserScore());
         if (0 != userScore) {
