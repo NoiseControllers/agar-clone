@@ -168,6 +168,7 @@
         setRegion(wjQuery("#region").val());
         null == ws && w && showConnecting();
         wjQuery("#overlays").show();
+        canvasResize();
 
     }
 
