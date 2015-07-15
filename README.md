@@ -1,5 +1,14 @@
 # agar-clone
 
+## Contents
+ - [Introduction](#introduction)
+ - [Setup](#setup)
+ - [Test and Known Issues](#test-and-known-issues)
+ - [FAQ](#faq)
+ - [Protocol Extensions](#protocol-extensions)
+ - [Contributions](#contributions)
+ - [Disclaimer](#disclaimer)
+
 ## Introduction
 
 This is a clone of agar.io. In this project we aim to acheive the following. 
@@ -15,7 +24,7 @@ This is a clone of agar.io. In this project we aim to acheive the following.
 Copy all files to a server with PHP support (e.g. LEMP/LAMP). To check whether your server supports PHP, please read [this tutorial](http://www.cyberciti.biz/faq/how-do-i-test-php-installation-with-a-phpinfo-page/).
 Once everything is set up, open index.html in your browser. If everything is working well, go to the next section to use your own Ogar server.
 
-### Support your server
+### Support Your Server
 Replace the CONNECTION_URL with your own ip and port in main_out.js
 
 ### Upload Custom Skins
@@ -32,11 +41,18 @@ will make it work.
 
 
 
-## Test and known issues
+## Test and Known Issues
 
 This client has been tested on LEMP stack on OS X 10.10 and Ubuntu 14.04 with server side [Ogar](https://github.com/vram4/Ogar).
 
 It is known that some of the variables and function names still make no sense, we are working on that. 
+
+## FAQ
+### Can agar-clone connect to the official server?
+No, agar-clone is not intended to be used with the official server. You will have to use it with [Ogar](https://github.com/forairan/Ogar) or [Cigar](https://github.com/m-byte/Cigar).
+
+### How can I use the chat feature?
+Currently, only [Cigar](https://github.com/m-byte/Cigar) supports the chat protocol. If you know of another server supporting the extended protocol, feel free to [let us know](https://github.com/Eureka22/agar-clone/issues).
 
 ## Protocol extensions
 As the server has to tell whether the client supports protocol extensions, the values of package 254 and 255 have been adjusted.
